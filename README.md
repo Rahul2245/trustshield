@@ -49,7 +49,7 @@ The platform performs synchronous edge validation while asynchronously executing
 > This diagram illustrates the high-level architecture of TrustShield, showing how requests flow across the Edge Gateway, asynchronous processing pipeline, AI inference workers, databases, and the real-time dashboard.
 
 <p align="center">
-<img src="docs/images/architecture.png" width="100%">
+<img src="Screenshot from 2026-06-29 21-26-49.png" width="100%">
 </p>
 
 
@@ -70,7 +70,7 @@ TrustShield decouples heavy computation using RabbitMQ so that:
 The following sequence diagram demonstrates how TrustShield processes authentication requests from initial gateway validation through asynchronous AI analysis and live dashboard notification.
 
 <p align="center">
-<img src="docs/images/request-flow.png" width="100%">
+<img src="Screenshot from 2026-06-29 21-26-24.png" width="100%">
 </p>
 
 

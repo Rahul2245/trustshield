@@ -6,6 +6,8 @@ import compression from "compression";
 
 import { requestLogger } from "../infrastructure/logger/request-logger";
 import { requestIdMiddleware } from "./middlewares/request-id.middleware";
+import { notFoundMiddleware } from "./middlewares/not-found.middleware";
+import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -25,7 +27,9 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+app.use(notFoundMiddleware);
 
+app.use(errorMiddleware);
 
 //server health
 

@@ -1,7 +1,7 @@
 import app from "./app/app";
+import { appConfig } from "./config";
 
-const PORT = 5000;
 
-app.listen(PORT, () => {
-    console.log(`Gateway running on port ${PORT}`);
+app.listen(appConfig.port, () => {
+    console.log(`Gateway running on port ${appConfig.port}`);
 });

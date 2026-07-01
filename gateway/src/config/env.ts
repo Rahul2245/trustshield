@@ -10,15 +10,21 @@ const envSchema = z.object({
 
     APP_NAME: z.string(),
 
-    MONGO_URI: z.string(),
+    DATABASE_NAME: z.string(),
+
+    MONGO_URI: z.string().url().or(z.string()),
 
     REDIS_URL: z.string(),
 
     RABBITMQ_URL: z.string(),
 
-    JWT_SECRET: z.string(),
+    JWT_ACCESS_SECRET: z.string(),
 
     JWT_REFRESH_SECRET: z.string(),
+
+    JWT_ACCESS_EXPIRES_IN: z.string(),
+
+    JWT_REFRESH_EXPIRES_IN: z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);

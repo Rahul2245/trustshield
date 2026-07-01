@@ -27,9 +27,7 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(notFoundMiddleware);
 
-app.use(errorMiddleware);
 
 //server health
 
@@ -39,5 +37,12 @@ app.get("/health",(_,res)=>{
         message: "gateway is running",
     });
 });
+
+// // API Routes
+// app.use("/api/v1", routes);
+
+app.use(notFoundMiddleware);
+
+app.use(errorMiddleware);
 
 export default app;

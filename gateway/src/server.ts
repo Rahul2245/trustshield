@@ -3,9 +3,6 @@ import { appConfig } from "./config";
 import { connectMongoDB } from "./infrastructure/database";
 import { logger } from "./infrastructure/logger/logger";
 
-logger.info("Application starting...");
-
-
 async function bootstrap() {
     try {
 

@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # RabbitMQ
    
     AMQP_URL: AmqpDsn = Field(
-        ...,
+        default="amqp://guest:guest@localhost:5672/",
         description="RabbitMQ connection string"
     )
 
@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     # MongoDB
    
     MONGO_URI: MongoDsn = Field(
-        ...,
+        default="mongodb://localhost:27017/",
         description="MongoDB connection string"
     )
 
@@ -72,7 +72,9 @@ class Settings(BaseSettings):
    
     # Gateway
    
-    GATEWAY_WEBHOOK_URL: HttpUrl = Field(...)
+    GATEWAY_WEBHOOK_URL: HttpUrl = Field(
+        default="http://localhost:3000/api/internal/webhook/ai-result"
+    )
 
     WEBHOOK_TIMEOUT: int = Field(
         default=5,
@@ -82,7 +84,7 @@ class Settings(BaseSettings):
    
     # Ollama
    
-    OLLAMA_HOST: HttpUrl = Field(...)
+    OLLAMA_HOST: HttpUrl = Field(default="http://localhost:11434")
 
     OLLAMA_MODEL: str = Field(
         default="llama3"
@@ -156,11 +158,17 @@ class Settings(BaseSettings):
    
     # ML Models
    
-    MODEL_DIRECTORY: Path = Path("./local_models")
+    MODEL_DIRECTORY: Path = Path("./models")
 
     TFIDF_MODEL_PATH: str = "tfidf.joblib"
-    NB_MODEL_PATH: str = "nb.joblib"
-    IF_MODEL_PATH: str = "iforest.joblib"
+    NB_MODEL_PATH: str = "naive_bayes.joblib"
+    IF_MODEL_PATH: str = "isolation_forest.joblib"
+    SCALER_MODEL_PATH: str = "behavior_scaler.joblib"
+    MODEL_METADATA_PATH: str = "model_metadata.json"
+    IFOREST_METADATA_PATH: str = "iforest_metadata.json"
+
+    LOAD_MODELS_ON_STARTUP: bool = True
+    CONNECT_SERVICES_ON_STARTUP: bool = True
 
     @property
     def tfidf_path(self) -> Path:
@@ -174,8 +182,20 @@ class Settings(BaseSettings):
     def if_model_path(self) -> Path:
         return self.MODEL_DIRECTORY / self.IF_MODEL_PATH
 
+    @property
+    def scaler_path(self) -> Path:
+        return self.MODEL_DIRECTORY / self.SCALER_MODEL_PATH
+
+    @property
+    def model_metadata_path(self) -> Path:
+        return self.MODEL_DIRECTORY / self.MODEL_METADATA_PATH
+
+    @property
+    def iforest_metadata_path(self) -> Path:
+        return self.MODEL_DIRECTORY / self.IFOREST_METADATA_PATH
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=Path(__file__).resolve().parents[2] / ".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",

@@ -15,7 +15,7 @@ REQUIRED_ARTIFACTS = [
     "iforest_metadata.json",
 ]
 
-
+ 
 def export_artifacts(
     source_models_dir: str | Path = "models",
     target_models_dir: str | Path = "../ai-worker/models",

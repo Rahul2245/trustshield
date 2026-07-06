@@ -1,5 +1,5 @@
 {
-    "training_timestamp": "2026-07-06T09:54:33.798783+00:00",
+    "training_timestamp": "2026-07-06T11:05:41.657675+00:00",
     "dataset_size": 30,
     "train_size": 24,
     "test_size": 6,
@@ -22,9 +22,9 @@
             ]
         ]
     },
-    "training_duration": 0.0025208260012732353,
-    "evaluation_duration": 0.012498219000917743,
-    "total_runtime": 0.01956525999958103,
+    "training_duration": 0.012214168998980313,
+    "evaluation_duration": 0.036384420000104,
+    "total_runtime": 0.06632111399994756,
     "class_distribution": {
         "safe": 15,
         "spam": 15

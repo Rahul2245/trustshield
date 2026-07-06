@@ -129,7 +129,7 @@ class TextPreprocessor:
                 f"Target column '{text_column}' not found in DataFrame."
             )
             logger.error(message)
-            raise ValueError(message)
+            raise ValueError(message)    
 
         logger.info(
             "Starting preprocessing for column '%s'.",

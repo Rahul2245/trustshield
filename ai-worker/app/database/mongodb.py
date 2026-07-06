@@ -57,19 +57,42 @@ class MongoDBManager:
             # Cache database reference
             self._database = self._client[settings.DATABASE_NAME]
 
+            await self.create_indexes()
+
             logger.info(
                 "Successfully connected to MongoDB database '%s'.",
                 settings.DATABASE_NAME,
             )
-
-            # Future:
-            # await self.create_indexes()
 
         except Exception:
             logger.exception("Failed to connect to MongoDB.")
             self._client = None
             self._database = None
             raise
+
+    async def create_indexes(self) -> None:
+        """Create compound indexes for fast security log lookups."""
+        if self._database is None:
+            raise RuntimeError("MongoDB database is not initialized.")
+
+        collection = self._database[settings.SECURITY_LOG_COLLECTION]
+        await collection.create_index(
+            [("input.origin_ip", 1), ("created_at", -1)],
+            name="origin_ip_created_idx",
+            background=True,
+        )
+        await collection.create_index(
+            [("threat_matrix.event_id", 1)],
+            name="event_id_idx",
+            unique=False,
+            background=True,
+        )
+        await collection.create_index(
+            [("threat_matrix.correlation_id", 1), ("created_at", -1)],
+            name="correlation_created_idx",
+            background=True,
+        )
+        logger.info("MongoDB indexes ensured for '%s'.", settings.SECURITY_LOG_COLLECTION)
 
     async def disconnect(self) -> None:
         """

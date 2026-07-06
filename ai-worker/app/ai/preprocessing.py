@@ -56,6 +56,9 @@ class TextPreprocessor:
         if text is None:
             return ""
 
+        if not isinstance(text, str):
+            text = str(text)
+
         # 1. Convert to lowercase
         cleaned_text = text.lower()
 

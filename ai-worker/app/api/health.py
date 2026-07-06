@@ -8,6 +8,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.ai.model_loader import ModelArtifactError, model_loader
+from app.ai.shadow_engine import shadow_engine
+from app.config.settings import settings
+from app.core.exceptions import PayloadTooLargeError
 from app.database.mongodb import mongodb
 from app.rabbitmq.connection import rabbitmq
 from app.rabbitmq.consumer import threat_event_consumer
@@ -39,6 +42,7 @@ async def readiness() -> dict[str, Any]:
         "rabbitmq": rabbit_ok,
         "models": models_ok,
         "consumer": threat_event_consumer.is_running(),
+        "ollama": await shadow_engine.health_check(),
     }
 
 
@@ -48,6 +52,11 @@ async def health() -> dict[str, Any]:
         "live": "alive",
         "ready": await readiness(),
         "models": model_loader.health(),
+        "ollama": {
+            "available": await shadow_engine.health_check(),
+            "host": str(settings.OLLAMA_HOST),
+            "model": settings.OLLAMA_MODEL,
+        },
     }
 
 
@@ -67,6 +76,11 @@ async def reload_models() -> dict[str, Any]:
 
 @router.post("/predict")
 async def predict(request: PredictionRequest) -> dict[str, Any]:
+    encoded_size = len(request.payload_text.encode("utf-8"))
+    if encoded_size > settings.MAX_PAYLOAD_BYTES:
+        raise PayloadTooLargeError(
+            f"Payload exceeds maximum size of {settings.MAX_PAYLOAD_BYTES} bytes."
+        )
     try:
         return await threat_pipeline.predict_text(request.payload_text)
     except ModelArtifactError as exc:

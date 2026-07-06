@@ -1,0 +1,28 @@
+{
+    "version": "1.0.0",
+    "training_timestamp": "2026-07-06T09:51:56.514108+00:00",
+    "algorithm": "IsolationForest",
+    "feature_order": [
+        "burst_velocity",
+        "target_recipient_ratio",
+        "uri_hyperlink_density",
+        "session_dwell_duration",
+        "word_count",
+        "character_count",
+        "uppercase_ratio",
+        "special_character_ratio",
+        "url_count"
+    ],
+    "feature_count": 9,
+    "dataset_size": 30,
+    "random_state": 42,
+    "n_estimators": 300,
+    "contamination": "auto",
+    "uses_scaler": true,
+    "scaler_name": "behavior_scaler.joblib",
+    "score_range": {
+        "min": -0.6909063018037311,
+        "max": -0.398085876951119,
+        "mean": -0.483684352206762
+    }
+}

@@ -48,6 +48,18 @@ class Settings(BaseSettings):
         default="security.threat_analysis_queue"
     )
 
+    DLQ_QUEUE_NAME: str = Field(
+        default="security.threats.dlq"
+    )
+
+    EXCHANGE_NAME: str = Field(
+        default="security.direct"
+    )
+
+    ROUTING_KEY: str = Field(
+        default="threat.eval"
+    )
+
     PREFETCH_COUNT: int = Field(
         default=10,
         gt=0
@@ -95,6 +107,16 @@ class Settings(BaseSettings):
         gt=0
     )
 
+    OLLAMA_MAX_RETRIES: int = Field(
+        default=3,
+        ge=0,
+    )
+
+    OLLAMA_RETRY_DELAY: float = Field(
+        default=1.0,
+        ge=0,
+    )
+
    
     # Fusion Engine
    
@@ -137,9 +159,16 @@ class Settings(BaseSettings):
     )
 
     HIGH_RISK_THRESHOLD: float = Field(
-        default=100,
+        default=80,
         ge=0,
-        le=100
+        le=100,
+        description="Alias for SHADOW_THRESHOLD upper bound; scores above this block access.",
+    )
+
+    MAX_PAYLOAD_BYTES: int = Field(
+        default=65536,
+        gt=0,
+        description="Maximum accepted payload size in bytes for inference requests.",
     )
 
    

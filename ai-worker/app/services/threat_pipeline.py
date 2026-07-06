@@ -12,7 +12,7 @@ from app.ai.isolation_forest import IsolationForestPrediction, isolation_forest_
 from app.ai.nlp_model import NLPPrediction, nlp_model
 from app.ai.shadow_engine import ShadowEvaluation, shadow_engine
 from app.core.logging import get_logger
-from app.database.mongodb import mongodb
+from app.database.repository import security_log_repository
 from app.ai.model_loader import model_loader
 from app.schemas.threat_event import ThreatEvent
 from app.schemas.threat_matrix import ThreatMatrix
@@ -133,10 +133,10 @@ class ThreatPipeline:
         return result.model_dump()
 
     async def _persist(self, document: dict[str, Any]) -> None:
-        if not mongodb.is_connected:
+        try:
+            await security_log_repository.insert_threat_log(document)
+        except RuntimeError:
             logger.warning("MongoDB is not connected; skipping threat matrix persistence.")
-            return
-        await mongodb.security_logs_collection.insert_one(document)
 
 
 threat_pipeline = ThreatPipeline()

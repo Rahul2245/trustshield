@@ -50,19 +50,15 @@ class FusionEngine:
         )
 
     def _decision_for_score(self, score: float) -> Decision:
-        if score >= settings.HIGH_RISK_THRESHOLD:
+        if score > settings.SHADOW_THRESHOLD:
             return "BLOCK"
-        if score >= settings.SHADOW_THRESHOLD:
-            return "SHADOW"
         if score >= settings.LOW_RISK_THRESHOLD:
-            return "MONITOR"
+            return "SHADOW"
         return "ALLOW"
 
     def _risk_level_for_score(self, score: float) -> RiskLevel:
-        if score >= 90:
+        if score > settings.SHADOW_THRESHOLD:
             return "CRITICAL"
-        if score >= settings.SHADOW_THRESHOLD:
-            return "HIGH"
         if score >= settings.LOW_RISK_THRESHOLD:
             return "MEDIUM"
         return "LOW"

@@ -13,6 +13,7 @@ from app.core.logging import configure_logging, get_logger
 from app.database.mongodb import mongodb
 from app.rabbitmq.connection import rabbitmq
 from app.rabbitmq.consumer import threat_event_consumer
+from app.services.ollama_client import ollama_client
 
 logger = get_logger(__name__)
 
@@ -26,6 +27,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.LOAD_MODELS_ON_STARTUP:
         model_loader.load_models()
 
+    await ollama_client.start()
+
     if settings.CONNECT_SERVICES_ON_STARTUP:
         await mongodb.connect()
         await rabbitmq.connect()
@@ -38,4 +41,5 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if settings.CONNECT_SERVICES_ON_STARTUP:
             await rabbitmq.disconnect()
             await mongodb.disconnect()
+        await ollama_client.stop()
         logger.info("AI worker shutdown completed.")

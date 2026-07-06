@@ -50,6 +50,10 @@ class ThreatEventConsumer:
         queue = await rabbitmq.channel.declare_queue(
             settings.QUEUE_NAME,
             durable=True,
+            arguments={
+                "x-dead-letter-exchange": "",
+                "x-dead-letter-routing-key": settings.DLQ_QUEUE_NAME,
+            },
         )
         logger.info("Started consuming RabbitMQ queue '%s'.", settings.QUEUE_NAME)
 
@@ -60,6 +64,7 @@ class ThreatEventConsumer:
                 await self._handle_message(message)
 
     async def _handle_message(self, message: IncomingMessage) -> None:
+        retry_count = self._extract_retry_count(message)
         try:
             payload = json.loads(message.body.decode("utf-8"))
             event = self._coerce_event(payload)
@@ -72,8 +77,26 @@ class ThreatEventConsumer:
             logger.error("Dropping malformed JSON message: %s", exc)
             await message.reject(requeue=False)
         except Exception:
-            logger.exception("Threat event processing failed; message will be requeued.")
+            logger.exception("Threat event processing failed.")
+            if retry_count >= settings.MAX_RETRIES:
+                logger.error(
+                    "Retry limit reached (%d); routing message to DLQ.",
+                    settings.MAX_RETRIES,
+                )
+                await message.reject(requeue=False)
+                return
+
+            delay = settings.RETRY_DELAY * (2**retry_count)
+            logger.warning("Requeueing message after %.1fs (retry %d).", delay, retry_count + 1)
+            await asyncio.sleep(delay)
             await message.nack(requeue=True)
+
+    def _extract_retry_count(self, message: IncomingMessage) -> int:
+        headers = message.headers or {}
+        death = headers.get("x-death")
+        if isinstance(death, list) and death:
+            return int(death[0].get("count", 0))
+        return int(headers.get("x-retry-count", 0))
 
     def _coerce_event(self, payload: dict[str, Any]) -> ThreatEvent:
         event_payload = {

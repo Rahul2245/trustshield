@@ -1,5 +1,5 @@
 import aio_pika
-from aio_pika import Connection, Channel
+from aio_pika import Channel, Connection, ExchangeType
 
 from typing import Optional
 
@@ -8,6 +8,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class RabbitMQManager:
     """
     Manages the RabbitMQ connection lifecycle for the AI Worker.
@@ -15,11 +16,10 @@ class RabbitMQManager:
     Responsibilities:
     - Establish a robust RabbitMQ connection.
     - Create and configure an AMQP channel.
+    - Declare the direct exchange, primary queue, and dead-letter queue.
     - Apply Quality of Service (QoS).
     - Gracefully close the connection during shutdown.
     - Expose connection health status.
-
-    This class intentionally contains no message processing logic.
     """
 
     def __init__(self) -> None:
@@ -28,23 +28,13 @@ class RabbitMQManager:
 
     @property
     def connection(self) -> Optional[Connection]:
-        """
-        Return the active RabbitMQ connection.
-        """
-        return self._connection  
+        return self._connection
 
     @property
     def channel(self) -> Optional[Channel]:
-        """
-        Return the active RabbitMQ channel.
-        """
-        return self._channel  
-    
+        return self._channel
+
     async def connect(self) -> None:
-        """
-        Establish a robust connection to RabbitMQ, create a channel,
-        and configure Quality of Service (QoS).
-        """
         if self._connection and not self._connection.is_closed:
             logger.warning("RabbitMQ connection is already established.")
             return
@@ -62,6 +52,8 @@ class RabbitMQManager:
                 prefetch_count=settings.PREFETCH_COUNT
             )
 
+            await self._declare_topology()
+
             logger.info(
                 "Successfully connected to RabbitMQ and configured QoS."
             )
@@ -72,10 +64,39 @@ class RabbitMQManager:
             self._channel = None
             raise
 
+    async def _declare_topology(self) -> None:
+        if self._channel is None:
+            raise RuntimeError("RabbitMQ channel is not initialized.")
+
+        exchange = await self._channel.declare_exchange(
+            settings.EXCHANGE_NAME,
+            ExchangeType.DIRECT,
+            durable=True,
+        )
+
+        dlq = await self._channel.declare_queue(
+            settings.DLQ_QUEUE_NAME,
+            durable=True,
+        )
+
+        queue = await self._channel.declare_queue(
+            settings.QUEUE_NAME,
+            durable=True,
+            arguments={
+                "x-dead-letter-exchange": "",
+                "x-dead-letter-routing-key": settings.DLQ_QUEUE_NAME,
+            },
+        )
+
+        await queue.bind(exchange, routing_key=settings.ROUTING_KEY)
+        logger.info(
+            "Declared exchange=%s queue=%s dlq=%s.",
+            settings.EXCHANGE_NAME,
+            settings.QUEUE_NAME,
+            settings.DLQ_QUEUE_NAME,
+        )
+
     async def disconnect(self) -> None:
-        """
-        Gracefully close the RabbitMQ channel and connection.
-        """
         logger.info("Shutting down RabbitMQ connection...")
 
         try:
@@ -95,12 +116,6 @@ class RabbitMQManager:
             self._connection = None
 
     def health_check(self) -> bool:
-        """
-        Verify the health of the RabbitMQ connection.
-
-        Returns:
-            True if both the connection and channel are active.
-        """
         return (
             self._connection is not None
             and not self._connection.is_closed
@@ -109,5 +124,4 @@ class RabbitMQManager:
         )
 
 
-# Singleton instance used across the application
 rabbitmq = RabbitMQManager()

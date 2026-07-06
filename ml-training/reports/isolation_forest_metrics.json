@@ -1,0 +1,71 @@
+{
+    "number_of_samples": 30,
+    "number_predicted_normal": 20,
+    "number_predicted_anomaly": 10,
+    "contamination_percentage": 33.33333333333333,
+    "mean_score": -0.483684352206762,
+    "std_score": 0.08524737443330718,
+    "min_score": -0.6909063018037311,
+    "max_score": -0.398085876951119,
+    "score_percentiles": {
+        "25th": -0.5464875964294909,
+        "50th": -0.4496852212606186,
+        "75th": -0.41370525065957375
+    },
+    "feature_statistics": {
+        "burst_velocity": {
+            "mean": 2.4416161616161616,
+            "std": 0.5551252148847483,
+            "min": 1.625,
+            "max": 3.465909090909091
+        },
+        "target_recipient_ratio": {
+            "mean": 0.057047138047138055,
+            "std": 0.014395425646522079,
+            "min": 0.05,
+            "max": 0.08888888888888888
+        },
+        "uri_hyperlink_density": {
+            "mean": 0.0,
+            "std": 0.0,
+            "min": 0.0,
+            "max": 0.0
+        },
+        "session_dwell_duration": {
+            "mean": 6.142154882154883,
+            "std": 0.48140634443391905,
+            "min": 5.111111111111111,
+            "max": 7.166666666666667
+        },
+        "word_count": {
+            "mean": 9.6,
+            "std": 1.6733200530681511,
+            "min": 5.0,
+            "max": 14.0
+        },
+        "character_count": {
+            "mean": 58.733333333333334,
+            "std": 8.30842253724925,
+            "min": 38.0,
+            "max": 75.0
+        },
+        "uppercase_ratio": {
+            "mean": 0.0,
+            "std": 0.0,
+            "min": 0.0,
+            "max": 0.0
+        },
+        "special_character_ratio": {
+            "mean": 0.0,
+            "std": 0.0,
+            "min": 0.0,
+            "max": 0.0
+        },
+        "url_count": {
+            "mean": 0.0,
+            "std": 0.0,
+            "min": 0.0,
+            "max": 0.0
+        }
+    }
+}

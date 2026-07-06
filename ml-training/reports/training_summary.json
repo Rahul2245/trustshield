@@ -1,10 +1,13 @@
 {
-    "status": "FAILED",
-    "created_at": "2026-07-06T07:40:56.469641+00:00",
-    "execution_time_seconds": 0.001,
-    "training_dataset_size": 0,
-    "number_of_raw_datasets": 0,
-    "feature_columns": [],
+    "status": "SUCCESS",
+    "created_at": "2026-07-06T09:54:34.538932+00:00",
+    "execution_time_seconds": 0.779,
+    "training_dataset_size": 30,
+    "number_of_raw_datasets": 1,
+    "feature_columns": [
+        "text",
+        "label"
+    ],
     "generated_models": [
         "tfidf.joblib",
         "naive_bayes.joblib",
@@ -19,5 +22,5 @@
         "isolation_forest_metrics.json",
         "training_summary.json"
     ],
-    "error": "No raw CSV datasets found in /home/rahul-gajula/python 2026/trustShield/ml-training/datasets/raw"
+    "error": null
 }

@@ -113,7 +113,7 @@ class TextPreprocessor:
             df:
                 Input dataframe.
 
-            text_column:
+            text_column:   
                 Name of the text column.
 
         Returns:

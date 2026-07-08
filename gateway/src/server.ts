@@ -2,6 +2,7 @@ import app from "./app/app";
 import { appConfig } from "./config";
 import { connectMongoDB } from "./infrastructure/database";
 import { logger } from "./infrastructure/logger/logger";
+import { rabbitMQClient } from "./infrastructure/rabbitmq/connection";
 
 async function bootstrap() {
     try {
@@ -9,6 +10,8 @@ async function bootstrap() {
         logger.info("Starting TrustShield Gateway...");
 
         await connectMongoDB();
+
+        await rabbitMQClient.connect();
 
         app.listen(appConfig.port, () => {
             logger.info(

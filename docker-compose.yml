@@ -1,0 +1,28 @@
+version: '3.8'
+
+networks:
+  trust_safety_secure_backplane:
+    driver: bridge
+
+services:
+  # Synchronous Edge API Validation Traffic Gateway Router
+  node-api-edge-gateway:
+    build:
+      context: ./gateway
+    container_name: node-api-edge-service
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./gateway/.env
+    networks:
+      - trust_safety_secure_backplane
+
+  # Asynchronous Multi-Tiered AI Computation Service Worker Engine
+  python-fastapi-ai-core:
+    build:
+      context: ./ai-worker
+    container_name: python-fastapi-ai-core
+    env_file:
+      - ./ai-worker/.env
+    networks:
+      - trust_safety_secure_backplane

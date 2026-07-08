@@ -19,6 +19,8 @@ const envSchema = zod_1.z.object({
     JWT_REFRESH_SECRET: zod_1.z.string(),
     JWT_ACCESS_EXPIRES_IN: zod_1.z.string(),
     JWT_REFRESH_EXPIRES_IN: zod_1.z.string(),
+    FRONTEND_ORIGIN: zod_1.z.string().default("http://localhost:5173"),
+    WEBHOOK_SECRET: zod_1.z.string().optional(),
 });
 const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {

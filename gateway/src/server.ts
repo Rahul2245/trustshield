@@ -1,8 +1,11 @@
+import { createServer } from "http";
+
 import app from "./app/app";
 import { appConfig } from "./config";
 import { connectMongoDB } from "./infrastructure/database";
 import { logger } from "./infrastructure/logger/logger";
 import { rabbitMQClient } from "./infrastructure/rabbitmq/connection";
+import { initializeSocketServer } from "./infrastructure/websocket/socket";
 
 async function bootstrap() {
     try {
@@ -13,13 +16,16 @@ async function bootstrap() {
 
         await rabbitMQClient.connect();
 
-        const server = app.listen(appConfig.port, () => {
+        const httpServer = createServer(app);
+        initializeSocketServer(httpServer);
+
+        httpServer.listen(appConfig.port, () => {
             logger.info(`Gateway running on port ${appConfig.port}`);
         });
 
         const gracefulShutdown = async (signal: string) => {
             logger.info(`Received ${signal}. Starting graceful shutdown...`);
-            server.close(() => {
+            httpServer.close(() => {
                 logger.info('HTTP server closed.');
             });
             await rabbitMQClient.disconnect();

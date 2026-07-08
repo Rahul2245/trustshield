@@ -6,6 +6,9 @@ class AuthRepository {
     async findByEmail(email) {
         return user_model_1.UserModel.findOne({ email }).exec();
     }
+    async findById(userId) {
+        return user_model_1.UserModel.findById(userId).exec();
+    }
     async create(userData) {
         const user = new user_model_1.UserModel(userData);
         return user.save();

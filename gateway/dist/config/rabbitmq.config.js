@@ -4,10 +4,10 @@ exports.rabbitmqConfig = void 0;
 const env_1 = require("./env");
 exports.rabbitmqConfig = {
     url: env_1.env.RABBITMQ_URL,
-    exchange: 'trustshield_exchange',
+    exchange: "trustshield.events",
     exchangeType: 'topic',
     queues: {
-        threatEvents: 'threat_events_queue'
+        threatEvents: "trustshield.threat.events"
     }
 };
 //# sourceMappingURL=rabbitmq.config.js.map

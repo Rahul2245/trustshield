@@ -5,6 +5,10 @@ export class AuthRepository {
     return UserModel.findOne({ email }).exec();
   }
 
+  public async findById(userId: string): Promise<IUser | null> {
+    return UserModel.findById(userId).exec();
+  }
+
   public async create(userData: Partial<IUser>): Promise<IUser> {
     const user = new UserModel(userData);
     return user.save();

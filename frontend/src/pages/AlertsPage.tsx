@@ -1,0 +1,143 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Check, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getSeverityColor } from "@/lib/utils";
+import { acknowledgeAlert, getAlerts } from "@/services/api";
+import type { ThreatAlert } from "@/types";
+
+export function AlertsPage() {
+  const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "acknowledged">("all");
+
+  const loadAlerts = () => {
+    setLoading(true);
+    const acknowledged =
+      filter === "pending" ? false : filter === "acknowledged" ? true : undefined;
+
+    getAlerts({ page: 1, limit: 50, acknowledged })
+      .then((data) => setAlerts(data.items))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAlerts();
+  }, [filter]);
+
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      await acknowledgeAlert(alertId);
+      toast.success("Alert acknowledged");
+      loadAlerts();
+    } catch {
+      toast.error("Failed to acknowledge alert");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-primary">Live Security Alerts</h1>
+        <p className="mt-1 text-muted">
+          Hot threat streaming events from the Socket.io pipeline
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        {(["all", "pending", "acknowledged"] as const).map((f) => (
+          <Button
+            key={f}
+            variant={filter === f ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter(f)}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </Button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+      ) : alerts.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted">
+            No alerts found. Alerts appear when rate limits trigger or AI
+            evaluation completes.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {alerts.map((alert) => (
+            <Card
+              key={alert.alertId}
+              className={
+                !alert.acknowledged && alert.severity === "CRITICAL"
+                  ? "border-red-300 bg-red-50/30"
+                  : ""
+              }
+            >
+              <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={getSeverityColor(alert.severity)}>
+                      {alert.severity}
+                    </Badge>
+                    <Badge variant="secondary">{alert.type}</Badge>
+                    {alert.action && (
+                      <Badge variant="outline">{alert.action}</Badge>
+                    )}
+                    {!alert.acknowledged && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-red-600">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-medium text-primary">{alert.message}</p>
+                  <div className="flex flex-wrap gap-4 text-xs text-muted">
+                    <span>ID: {alert.correlationId.slice(0, 16)}...</span>
+                    {alert.ipAddress && <span>IP: {alert.ipAddress}</span>}
+                    {alert.email && <span>Email: {alert.email}</span>}
+                    {alert.riskScore !== undefined && (
+                      <span>Risk: {alert.riskScore.toFixed(1)}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {alert.eventId && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/threats/${alert.eventId}`}>
+                        <ExternalLink className="h-4 w-4" />
+                        Details
+                      </Link>
+                    </Button>
+                  )}
+                  {!alert.acknowledged && (
+                    <Button
+                      variant="success"
+                      size="sm"
+                      onClick={() => handleAcknowledge(alert.alertId)}
+                    >
+                      <Check className="h-4 w-4" />
+                      Acknowledge
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

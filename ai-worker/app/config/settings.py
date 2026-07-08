@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     # ---------------------------------------------------------------------
 
     GATEWAY_WEBHOOK_URL: HttpUrl = Field(
-        default="http://localhost:3000/api/internal/webhook/ai-result"
+        default="http://localhost:5000/api/internal/webhook/ai-result"
     )
 
     WEBHOOK_TIMEOUT: int = Field(

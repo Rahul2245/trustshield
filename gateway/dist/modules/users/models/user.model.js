@@ -39,14 +39,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const user_role_enum_1 = require("../../../core/enums/user-role.enum");
 const UserSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true },
+    role: { type: String, enum: Object.values(user_role_enum_1.UserRole), default: user_role_enum_1.UserRole.USER },
     status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
     lastLoginAt: { type: Date }
 }, {
     timestamps: true
 });
+UserSchema.index({ status: 1, lastLoginAt: -1 });
+UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.pre('save', async function () {
     if (!this.isModified('password')) {
         return;

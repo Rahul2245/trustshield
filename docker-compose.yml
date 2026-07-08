@@ -22,7 +22,22 @@ services:
     build:
       context: ./ai-worker
     container_name: python-fastapi-ai-core
+    ports:
+      - "8000:8000"
     env_file:
       - ./ai-worker/.env
+    networks:
+      - trust_safety_secure_backplane
+
+  # React Security Admin Console
+  trustshield-admin-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trustshield-admin-ui
+    ports:
+      - "5173:80"
+    depends_on:
+      - node-api-edge-gateway
     networks:
       - trust_safety_secure_backplane

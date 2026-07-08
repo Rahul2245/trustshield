@@ -7,6 +7,7 @@ const auth_validation_1 = require("../validators/auth.validation");
 const api_response_1 = require("../../../shared/responses/api-response");
 const connection_1 = require("../../../infrastructure/rabbitmq/connection");
 const logger_1 = require("../../../infrastructure/logger/logger");
+const AppError_1 = require("../../../core/errors/AppError");
 class AuthController {
     authService;
     constructor() {
@@ -26,15 +27,17 @@ class AuthController {
         try {
             const validatedData = auth_validation_1.LoginSchema.parse(req.body);
             const result = await this.authService.login(validatedData);
+            const clientIp = this.extractClientIp(req);
+            const correlationId = (0, uuid_1.v4)();
             const threatPayload = {
                 eventId: (0, uuid_1.v4)(),
                 eventType: 'ThreatLoginEvent',
-                userId: result.user.id,
+                userId: String(result.user.id),
                 email: result.user.email,
-                ipAddress: req.ip || req.connection.remoteAddress || '127.0.0.1',
+                ipAddress: clientIp,
                 userAgent: req.headers['user-agent'] || 'unknown',
                 timestamp: new Date().toISOString(),
-                correlationId: (0, uuid_1.v4)(),
+                correlationId,
                 requestId: req.requestId || (0, uuid_1.v4)(),
                 metadata: {
                     burstVelocity: 0.0,
@@ -50,9 +53,29 @@ class AuthController {
             api_response_1.ApiResponse.success(res, 'User logged in successfully', result, 200);
         }
         catch (error) {
+            if (error instanceof AppError_1.AppError) {
+                api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
+                return;
+            }
             api_response_1.ApiResponse.error(res, 401, 'Login failed', error);
         }
     };
+    me = async (req, res) => {
+        try {
+            const profile = await this.authService.getProfile(req.user.id);
+            api_response_1.ApiResponse.success(res, 'Profile retrieved', profile);
+        }
+        catch (error) {
+            api_response_1.ApiResponse.error(res, 404, 'Profile not found', error);
+        }
+    };
+    extractClientIp(req) {
+        const forwarded = req.headers['x-forwarded-for'];
+        if (typeof forwarded === 'string') {
+            return forwarded.split(',')[0].trim();
+        }
+        return req.ip || req.socket.remoteAddress || '127.0.0.1';
+    }
 }
 exports.AuthController = AuthController;
 //# sourceMappingURL=auth.controller.js.map

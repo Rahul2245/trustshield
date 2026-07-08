@@ -4,6 +4,8 @@ import helmet from "helmet";
 import compression from "compression";
 
 import routes from "./routes";
+import internalRoutes from "../modules/admin/routes/internal.routes";
+import { env } from "../config/env";
 
 import { requestLogger } from "../infrastructure/logger/request-logger";
 import { requestIdMiddleware } from "./middlewares/request-id.middleware";
@@ -20,7 +22,10 @@ app.use(requestLogger);
 
 app.use(helmet());
 
-app.use(cors());
+app.use(cors({
+    origin: env.FRONTEND_ORIGIN,
+    credentials: true,
+}));
 
 app.use(compression());
 
@@ -38,6 +43,9 @@ app.get("/health",(_,res)=>{
         message: "gateway is running",
     });
 });
+
+// Internal webhook routes (AI worker callbacks)
+app.use("/api/internal", internalRoutes);
 
 // API Routes
 app.use("/api/v1", routes);

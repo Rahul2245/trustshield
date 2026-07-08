@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from "express";
+import { v4 as uuidv4 } from "uuid";
+
 import { redis } from "../../infrastructure/redis/redis";
 import { AppError } from "../../core/errors/AppError";
+import { AdminService } from "../../modules/admin/services/admin.service";
+import { logger } from "../../infrastructure/logger/logger";
+
+const adminService = new AdminService();
 
 export const rateLimiterMiddleware = async (
     req: Request,
@@ -8,8 +14,10 @@ export const rateLimiterMiddleware = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown_ip";
-        // Simple fallback for target account based on body
+        const forwarded = req.headers["x-forwarded-for"];
+        const clientIp = typeof forwarded === "string"
+            ? forwarded.split(",")[0].trim()
+            : req.socket.remoteAddress || "unknown_ip";
         const targetAccount = req.body?.email || "unknown_account";
         
         const windowSeconds = 60;
@@ -18,24 +26,28 @@ export const rateLimiterMiddleware = async (
 
         const redisClient = redis.getClient();
         
-        // Execute atomic pipelined transactional updates concurrently
         const results = await redisClient.multi()
             .incr(ipTrackingKey)
             .incr(accountTrackingKey)
             .exec();
 
         if (!results || results.length !== 2) {
-            return next(); // Fail open if redis issues
+            return next();
         }
 
         const ipCount = results[0][1] as number;
         const accountCount = results[1][1] as number;
 
-        // Enforce sliding window bounds automatically
         if (ipCount === 1) await redisClient.expire(ipTrackingKey, windowSeconds);
         if (accountCount === 1) await redisClient.expire(accountTrackingKey, windowSeconds);
 
         if (ipCount > 5 || accountCount > 5) {
+            adminService.createRateLimitAlert({
+                ipAddress: clientIp,
+                email: req.body?.email,
+                correlationId: req.requestId || uuidv4(),
+            }).catch(err => logger.error(err, "Failed to broadcast rate limit alert"));
+
             throw new AppError(
                 "Too many requests, please try again later.",
                 429,

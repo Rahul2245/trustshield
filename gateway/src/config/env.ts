@@ -25,6 +25,10 @@ const envSchema = z.object({
     JWT_ACCESS_EXPIRES_IN: z.string(),
 
     JWT_REFRESH_EXPIRES_IN: z.string(),
+
+    FRONTEND_ORIGIN: z.string().default("http://localhost:5173"),
+
+    WEBHOOK_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

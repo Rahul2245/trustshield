@@ -1,17 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { env } from "../../config/env";
-import { redis } from "../../infrastructure/redis/redis";
-import { AppError } from "../../core/errors/AppError";
-import { logger } from "../../infrastructure/logger/logger";
 
-interface JwtPayload {
-    userId: string;
-    email: string;
-    role: string;
-    iat: number;
-    exp: number;
-}
+import { jwtConfig } from "../../config/jwt.config";
+import { UserRole } from "../../core/enums/user-role.enum";
+import { AppError } from "../../core/errors/AppError";
+import { redis } from "../../infrastructure/redis/redis";
+import { JwtPayload, verifyAccessToken } from "../../infrastructure/security/jwt";
+import { logger } from "../../infrastructure/logger/logger";
 
 export const authMiddleware = async (
     req: Request,
@@ -27,16 +22,14 @@ export const authMiddleware = async (
 
         const token = authHeader.split(" ")[1];
 
-        // Check if token is blacklisted in Redis
         const isBlacklisted = await redis.get(`blacklist:${token}`);
         if (isBlacklisted) {
             throw new AppError("Token has been revoked. Please log in again.", 401, "TOKEN_REVOKED");
         }
 
         try {
-            const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+            const decoded = verifyAccessToken(token) as JwtPayload;
             
-            // Inject user payload to request
             req.user = {
                 id: decoded.userId,
                 email: decoded.email,
@@ -44,7 +37,7 @@ export const authMiddleware = async (
             };
 
             next();
-        } catch (err: any) {
+        } catch (err: unknown) {
             logger.warn(err, "JWT verification failed");
             throw new AppError("Invalid or expired token.", 401, "INVALID_TOKEN");
         }

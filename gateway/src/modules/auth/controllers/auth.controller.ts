@@ -6,6 +6,7 @@ import { ApiResponse } from '../../../shared/responses/api-response';
 import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
 import { ThreatEvent } from '../../../shared/events/threat-event.interface';
 import { logger } from '../../../infrastructure/logger/logger';
+import { AppError } from '../../../core/errors/AppError';
 
 export class AuthController {
   private authService: AuthService;
@@ -19,7 +20,7 @@ export class AuthController {
       const validatedData = RegistrationSchema.parse(req.body);
       const result = await this.authService.register(validatedData);
       ApiResponse.success(res, 'User registered successfully', result, 201);
-    } catch (error: any) {
+    } catch (error: unknown) {
       ApiResponse.error(res, 400, 'Registration failed', error);
     }
   };
@@ -29,15 +30,18 @@ export class AuthController {
       const validatedData = LoginSchema.parse(req.body);
       const result = await this.authService.login(validatedData);
 
+      const clientIp = this.extractClientIp(req);
+      const correlationId = uuidv4();
+
       const threatPayload: ThreatEvent = {
         eventId: uuidv4(),
         eventType: 'ThreatLoginEvent',
-        userId: result.user.id,
+        userId: String(result.user.id),
         email: result.user.email,
-        ipAddress: req.ip || req.connection.remoteAddress || '127.0.0.1',
+        ipAddress: clientIp,
         userAgent: req.headers['user-agent'] || 'unknown',
         timestamp: new Date().toISOString(),
-        correlationId: uuidv4(),
+        correlationId,
         requestId: req.requestId || uuidv4(),
         metadata: {
           burstVelocity: 0.0,
@@ -53,8 +57,29 @@ export class AuthController {
       });
 
       ApiResponse.success(res, 'User logged in successfully', result, 200);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.statusCode, error.message, error);
+        return;
+      }
       ApiResponse.error(res, 401, 'Login failed', error);
     }
   };
+
+  public me = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const profile = await this.authService.getProfile(req.user!.id);
+      ApiResponse.success(res, 'Profile retrieved', profile);
+    } catch (error: unknown) {
+      ApiResponse.error(res, 404, 'Profile not found', error);
+    }
+  };
+
+  private extractClientIp(req: Request): string {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || '127.0.0.1';
+  }
 }

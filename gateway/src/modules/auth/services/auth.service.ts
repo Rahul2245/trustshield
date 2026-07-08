@@ -1,64 +1,93 @@
-import { AuthRepository } from '../repositories/auth.repository';
-import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from "uuid";
+
+import { UserRole } from "../../../core/enums/user-role.enum";
+import { AppError } from "../../../core/errors/AppError";
+import {
+    generateAccessToken,
+    generateRefreshToken,
+} from "../../../infrastructure/security/jwt";
+import { AuthRepository } from "../repositories/auth.repository";
 
 export class AuthService {
-  private authRepository: AuthRepository;
+    private authRepository: AuthRepository;
 
-  constructor() {
-    this.authRepository = new AuthRepository();
-  }
-
-  public async register(userData: any): Promise<any> {
-    const existingUser = await this.authRepository.findByEmail(userData.email);
-    if (existingUser) {
-      throw new Error('User already exists');
+    constructor() {
+        this.authRepository = new AuthRepository();
     }
 
-    const newUser = await this.authRepository.create({
-      email: userData.email,
-      password: userData.password
-    });
+    public async register(userData: { email: string; password: string; role?: UserRole }) {
+        const existingUser = await this.authRepository.findByEmail(userData.email);
+        if (existingUser) {
+            throw new Error("User already exists");
+        }
 
-    return {
-      id: newUser._id,
-      email: newUser.email
-    };
-  }
+        const newUser = await this.authRepository.create({
+            email: userData.email,
+            password: userData.password,
+            role: userData.role ?? UserRole.USER,
+        });
 
-  public async login(userData: any): Promise<any> {
-    const user = await this.authRepository.findByEmail(userData.email);
-    if (!user) {
-      throw new Error('Invalid credentials');
+        return {
+            id: newUser._id,
+            email: newUser.email,
+            role: newUser.role,
+        };
     }
 
-    const isMatch = await user.comparePassword(userData.password);
-    if (!isMatch) {
-      throw new Error('Invalid credentials');
+    public async login(userData: { email: string; password: string }) {
+        const user = await this.authRepository.findByEmail(userData.email);
+        if (!user) {
+            throw new Error("Invalid credentials");
+        }
+
+        if (user.status === "SUSPENDED") {
+            throw new AppError("Account suspended.", 403, "ACCOUNT_SUSPENDED");
+        }
+
+        const isMatch = await user.comparePassword(userData.password);
+        if (!isMatch) {
+            throw new Error("Invalid credentials");
+        }
+
+        await this.authRepository.updateLastLogin((user._id as { toString(): string }).toString());
+
+        const sessionId = uuidv4();
+        const tokenPayload = {
+            userId: (user._id as { toString(): string }).toString(),
+            email: user.email,
+            role: user.role,
+            sessionId,
+        };
+
+        const accessToken = generateAccessToken(tokenPayload);
+        const refreshToken = generateRefreshToken(tokenPayload);
+
+        return {
+            user: {
+                id: (user._id as { toString(): string }).toString(),
+                email: user.email,
+                role: user.role,
+                status: user.status,
+            },
+            tokens: {
+                accessToken,
+                refreshToken,
+            },
+        };
     }
 
-    await this.authRepository.updateLastLogin((user._id as any).toString());
+    public async getProfile(userId: string) {
+        const user = await this.authRepository.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
 
-    const accessToken = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: '15m' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret',
-      { expiresIn: '7d' }
-    );
-
-    return {
-      user: {
-        id: user._id,
-        email: user.email
-      },
-      tokens: {
-        accessToken,
-        refreshToken
-      }
-    };
-  }
+        return {
+            id: user._id,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            lastLoginAt: user.lastLoginAt,
+        };
+    }
 }

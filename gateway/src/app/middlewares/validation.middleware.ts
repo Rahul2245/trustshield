@@ -23,19 +23,10 @@ export function validate(
 
 
         if (!result.success) {
-
-            return res.status(400).json(
-                new ApiResponse(
-                    false,
-                    "Validation failed",
-                    undefined,
-                    {
-                        code: ErrorCodes.VALIDATION_ERROR,
-                        details: result.error.flatten(),
-                    }
-                )
-            );
-
+            return ApiResponse.error(res, 400, "Validation failed", {
+                code: ErrorCodes.VALIDATION_ERROR,
+                details: result.error.flatten(),
+            });
         }
 
 

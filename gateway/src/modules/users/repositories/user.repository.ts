@@ -13,7 +13,7 @@ export class UserRepository {
     return UserModel.findById(id);
 }
     async create(user: Partial<IUser>) {
-    return UserModel.create(user);
+    return UserModel.create(user as any);
 }
     async updateLastLogin(userId: string) {
         return UserModel.findByIdAndUpdate(

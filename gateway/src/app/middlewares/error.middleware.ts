@@ -10,7 +10,7 @@ export function errorMiddleware(
     res: Response,
     next: NextFunction
 
-):void{
+): any {
     let error = err;
 
     if (!(error instanceof AppError)) {
@@ -30,28 +30,10 @@ export function errorMiddleware(
 
     const appError = error as AppError;
 
-     res.status(appError.statusCode).json(
-
-        new ApiResponse(
-
-            false,
-
-            appError.message,
-
-            undefined,
-
-            {
-                code: appError.code,
-                requestId: req.requestId,
-
-                ...(process.env.NODE_ENV !== "production"
-                    ? { stack: appError.stack }
-                    : {})
-            }
-
-        )
-
-    );
+     return ApiResponse.error(res, appError.statusCode, appError.message, {
+         code: appError.code,
+         ...(process.env.NODE_ENV !== "production" ? { stack: appError.stack } : {})
+     });
 
 
 }

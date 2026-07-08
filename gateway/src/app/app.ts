@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 
+import routes from "./routes";
 
 import { requestLogger } from "../infrastructure/logger/request-logger";
 import { requestIdMiddleware } from "./middlewares/request-id.middleware";
@@ -38,8 +39,8 @@ app.get("/health",(_,res)=>{
     });
 });
 
-// // API Routes
-// app.use("/api/v1", routes);
+// API Routes
+app.use("/api/v1", routes);
 
 app.use(notFoundMiddleware);
 

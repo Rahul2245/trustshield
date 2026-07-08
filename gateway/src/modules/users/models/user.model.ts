@@ -1,65 +1,42 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcrypt';
 
-import { AccountStatus, UserRole } from "../../../core/enums";
+export interface IUser extends Document {
+  email: string;
+  password?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
 
-import { IUser } from "../interfaces/user.interface";
+const UserSchema: Schema = new Schema({
+  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  password: { type: String, required: true },
+  status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
+  lastLoginAt: { type: Date }
+}, {
+  timestamps: true
+});
 
-const userSchema = new Schema<IUser>(
-    {
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
+UserSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return;
+  }
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(this.password as string, salt);
+    this.password = hash;
+  } catch (err) {
+    throw err;
+  }
+});
 
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-        },
+UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) return false;
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
-        passwordHash: {
-            type: String,
-            required: true,
-            select: false,
-        },
-
-        role: {
-            type: String,
-            enum: Object.values(UserRole),
-            default: UserRole.USER,
-        },
-
-        status: {
-            type: String,
-            enum: Object.values(AccountStatus),
-            default: AccountStatus.ACTIVE,
-        },
-
-        failedLoginAttempts: {
-            type: Number,
-            default: 0,
-        },
-
-        accountLockedUntil: {
-            type: Date,
-        },
-
-        lastLoginAt: {
-            type: Date,
-        },
-
-        refreshTokenHash: {
-            type: String,
-            select: false,
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
-
-export const UserModel = model<IUser>("User", userSchema);
+export const UserModel = mongoose.model<IUser>('User', UserSchema);

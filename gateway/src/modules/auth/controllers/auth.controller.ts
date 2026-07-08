@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from '../services/auth.service';
 import { RegistrationSchema, LoginSchema } from '../validators/auth.validation';
 import { ApiResponse } from '../../../shared/responses/api-response';
 import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
+import { ThreatEvent } from '../../../shared/events/threat-event.interface';
+import { logger } from '../../../infrastructure/logger/logger';
 
 export class AuthController {
   private authService: AuthService;
@@ -26,14 +29,28 @@ export class AuthController {
       const validatedData = LoginSchema.parse(req.body);
       const result = await this.authService.login(validatedData);
 
-      // Publish threat event
-      const threatPayload = {
-        user_id: result.user.id,
-        payload_text: 'User login attempt',
-        ip: req.ip || req.connection.remoteAddress
+      const threatPayload: ThreatEvent = {
+        eventId: uuidv4(),
+        eventType: 'ThreatLoginEvent',
+        userId: result.user.id,
+        email: result.user.email,
+        ipAddress: req.ip || req.connection.remoteAddress || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        timestamp: new Date().toISOString(),
+        correlationId: uuidv4(),
+        requestId: req.requestId || uuidv4(),
+        metadata: {
+          burstVelocity: 0.0,
+          targetRecipientRatio: 0.0,
+          uriHyperlinkDensity: 0.0,
+          sessionDwellDuration: 0.0,
+          payloadText: 'User login attempt',
+        }
       };
       
-      await rabbitMQClient.publishThreatEvent(threatPayload);
+      rabbitMQClient.publishThreatEvent(threatPayload).catch(err => {
+        logger.error({ err, eventId: threatPayload.eventId }, 'Failed to publish threat event');
+      });
 
       ApiResponse.success(res, 'User logged in successfully', result, 200);
     } catch (error: any) {

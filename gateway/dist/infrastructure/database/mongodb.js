@@ -9,6 +9,10 @@ const database_config_1 = require("../../config/database.config");
 const logger_1 = require("../../infrastructure/logger/logger");
 async function connectMongoDB() {
     try {
+        //         console.log("Type:", typeof databaseConfig.uri);
+        // console.log("Raw:", databaseConfig.uri);
+        // console.log("JSON:", JSON.stringify(databaseConfig.uri));
+        // console.log("Length:", databaseConfig.uri.length);
         await mongoose_1.default.connect(database_config_1.databaseConfig.uri, {
             dbName: database_config_1.databaseConfig.dbName,
         });

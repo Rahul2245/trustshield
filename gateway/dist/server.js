@@ -7,13 +7,26 @@ const app_1 = __importDefault(require("./app/app"));
 const config_1 = require("./config");
 const database_1 = require("./infrastructure/database");
 const logger_1 = require("./infrastructure/logger/logger");
+const connection_1 = require("./infrastructure/rabbitmq/connection");
 async function bootstrap() {
     try {
         logger_1.logger.info("Starting TrustShield Gateway...");
         await (0, database_1.connectMongoDB)();
-        app_1.default.listen(config_1.appConfig.port, () => {
+        await connection_1.rabbitMQClient.connect();
+        const server = app_1.default.listen(config_1.appConfig.port, () => {
             logger_1.logger.info(`Gateway running on port ${config_1.appConfig.port}`);
         });
+        const gracefulShutdown = async (signal) => {
+            logger_1.logger.info(`Received ${signal}. Starting graceful shutdown...`);
+            server.close(() => {
+                logger_1.logger.info('HTTP server closed.');
+            });
+            await connection_1.rabbitMQClient.disconnect();
+            logger_1.logger.info('Graceful shutdown completed.');
+            process.exit(0);
+        };
+        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
     }
     catch (error) {
         logger_1.logger.fatal(error, "Application startup failed");

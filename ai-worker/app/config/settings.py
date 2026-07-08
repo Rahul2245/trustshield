@@ -4,8 +4,6 @@ from typing import Literal
 from pydantic import (
     Field,
     HttpUrl,
-    AmqpDsn,
-    MongoDsn,
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,16 +14,17 @@ class Settings(BaseSettings):
     Application settings for the Unified Trust AI Worker.
     """
 
-   
+    # ---------------------------------------------------------------------
     # Application Configuration
-   
+    # ---------------------------------------------------------------------
+
     APP_NAME: str = Field(default="Unified Trust AI Worker")
     APP_VERSION: str = Field(default="1.0.0")
 
     ENVIRONMENT: Literal[
         "development",
         "staging",
-        "production"
+        "production",
     ] = "development"
 
     LOG_LEVEL: Literal[
@@ -33,19 +32,20 @@ class Settings(BaseSettings):
         "INFO",
         "WARNING",
         "ERROR",
-        "CRITICAL"
+        "CRITICAL",
     ] = "INFO"
 
-   
+    # ---------------------------------------------------------------------
     # RabbitMQ
-   
-    AMQP_URL: AmqpDsn = Field(
+    # ---------------------------------------------------------------------
+
+    AMQP_URL: str = Field(
         default="amqp://guest:guest@localhost:5672/",
-        description="RabbitMQ connection string"
+        description="RabbitMQ connection string",
     )
 
     QUEUE_NAME: str = Field(
-        default="security.threat_analysis_queue"
+        default="security.threat_analysis_queue.v2"
     )
 
     DLQ_QUEUE_NAME: str = Field(
@@ -62,15 +62,16 @@ class Settings(BaseSettings):
 
     PREFETCH_COUNT: int = Field(
         default=10,
-        gt=0
+        gt=0,
     )
 
-   
+    # ---------------------------------------------------------------------
     # MongoDB
-   
-    MONGO_URI: MongoDsn = Field(
+    # ---------------------------------------------------------------------
+
+    MONGO_URI: str = Field(
         default="mongodb://localhost:27017/",
-        description="MongoDB connection string"
+        description="MongoDB connection string",
     )
 
     DATABASE_NAME: str = Field(
@@ -81,22 +82,26 @@ class Settings(BaseSettings):
         default="security_event_logs"
     )
 
-   
+    # ---------------------------------------------------------------------
     # Gateway
-   
+    # ---------------------------------------------------------------------
+
     GATEWAY_WEBHOOK_URL: HttpUrl = Field(
         default="http://localhost:3000/api/internal/webhook/ai-result"
     )
 
     WEBHOOK_TIMEOUT: int = Field(
         default=5,
-        gt=0
+        gt=0,
     )
 
-   
+    # ---------------------------------------------------------------------
     # Ollama
-   
-    OLLAMA_HOST: HttpUrl = Field(default="http://localhost:11434")
+    # ---------------------------------------------------------------------
+
+    OLLAMA_HOST: HttpUrl = Field(
+        default="http://localhost:11434"
+    )
 
     OLLAMA_MODEL: str = Field(
         default="llama3"
@@ -104,7 +109,7 @@ class Settings(BaseSettings):
 
     OLLAMA_TIMEOUT: int = Field(
         default=45,
-        gt=0
+        gt=0,
     )
 
     OLLAMA_MAX_RETRIES: int = Field(
@@ -117,19 +122,20 @@ class Settings(BaseSettings):
         ge=0,
     )
 
-   
+    # ---------------------------------------------------------------------
     # Fusion Engine
-   
+    # ---------------------------------------------------------------------
+
     NLP_WEIGHT: float = Field(
         default=0.65,
         ge=0,
-        le=1
+        le=1,
     )
 
     IF_WEIGHT: float = Field(
         default=0.35,
         ge=0,
-        le=1
+        le=1,
     )
 
     @model_validator(mode="after")
@@ -143,56 +149,58 @@ class Settings(BaseSettings):
 
         return self
 
-   
-    # Risk Thresholds (0-100 scale)
-   
+    # ---------------------------------------------------------------------
+    # Risk Thresholds
+    # ---------------------------------------------------------------------
+
     LOW_RISK_THRESHOLD: float = Field(
         default=50,
         ge=0,
-        le=100
+        le=100,
     )
 
     SHADOW_THRESHOLD: float = Field(
         default=80,
         ge=0,
-        le=100
+        le=100,
     )
 
     HIGH_RISK_THRESHOLD: float = Field(
         default=80,
         ge=0,
         le=100,
-        description="Alias for SHADOW_THRESHOLD upper bound; scores above this block access.",
     )
 
     MAX_PAYLOAD_BYTES: int = Field(
         default=65536,
         gt=0,
-        description="Maximum accepted payload size in bytes for inference requests.",
     )
 
-   
+    # ---------------------------------------------------------------------
     # Worker
-   
+    # ---------------------------------------------------------------------
+
     MAX_RETRIES: int = Field(
         default=3,
-        ge=0
+        ge=0,
     )
 
     RETRY_DELAY: int = Field(
         default=2,
-        ge=0
+        ge=0,
     )
 
-   
+    # ---------------------------------------------------------------------
     # ML Models
-   
+    # ---------------------------------------------------------------------
+
     MODEL_DIRECTORY: Path = Path("./models")
 
     TFIDF_MODEL_PATH: str = "tfidf.joblib"
     NB_MODEL_PATH: str = "naive_bayes.joblib"
     IF_MODEL_PATH: str = "isolation_forest.joblib"
     SCALER_MODEL_PATH: str = "behavior_scaler.joblib"
+
     MODEL_METADATA_PATH: str = "model_metadata.json"
     IFOREST_METADATA_PATH: str = "iforest_metadata.json"
 

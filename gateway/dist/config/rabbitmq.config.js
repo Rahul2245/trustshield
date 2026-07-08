@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rabbitmqConfig = void 0;
+const env_1 = require("./env");
 exports.rabbitmqConfig = {
-    url: process.env.RABBITMQ_URL || 'amqp://localhost:5672',
+    url: env_1.env.RABBITMQ_URL,
     exchange: 'trustshield_exchange',
     exchangeType: 'topic',
     queues: {

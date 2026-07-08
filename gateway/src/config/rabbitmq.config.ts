@@ -2,9 +2,11 @@ import { env } from "./env";
 
 export const rabbitmqConfig = {
   url: env.RABBITMQ_URL,
-  exchange: 'trustshield_exchange',
+  exchange: "trustshield.events",
   exchangeType: 'topic',
+  
   queues: {
-    threatEvents: 'threat_events_queue'
+    threatEvents:"trustshield.threat.events"
+    
   }
 };

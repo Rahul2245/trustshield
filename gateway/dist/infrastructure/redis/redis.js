@@ -10,6 +10,7 @@ const logger_1 = require("../logger/logger");
 class RedisClient {
     client;
     constructor() {
+        // console.log(env.REDIS_URL);
         this.client = new ioredis_1.default(env_1.env.REDIS_URL, {
             maxRetriesPerRequest: null,
             retryStrategy(times) {

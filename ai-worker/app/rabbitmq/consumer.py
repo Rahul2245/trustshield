@@ -47,15 +47,28 @@ class ThreatEventConsumer:
         if rabbitmq.channel is None:
             raise RuntimeError("RabbitMQ channel is not initialized.")
 
+        # Declare Dead Letter Exchange and Queue
+        dlx_exchange = await rabbitmq.channel.declare_exchange(
+            f"{settings.EXCHANGE_NAME}.dlx",
+            type="topic",
+            durable=True,
+        )
+        dlq_queue = await rabbitmq.channel.declare_queue(
+            settings.DLQ_QUEUE_NAME,
+            durable=True,
+        )
+        await dlq_queue.bind(dlx_exchange, routing_key="#")
+
+        # Declare Main Queue
         queue = await rabbitmq.channel.declare_queue(
             settings.QUEUE_NAME,
             durable=True,
             arguments={
-                "x-dead-letter-exchange": "",
+                "x-dead-letter-exchange": dlx_exchange.name,
                 "x-dead-letter-routing-key": settings.DLQ_QUEUE_NAME,
             },
         )
-        logger.info("Started consuming RabbitMQ queue '%s'.", settings.QUEUE_NAME)
+        logger.info("Started consuming RabbitMQ queue '%s'. DLQ bound to '%s'.", settings.QUEUE_NAME, dlx_exchange.name)
 
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
@@ -99,6 +112,8 @@ class ThreatEventConsumer:
         return int(headers.get("x-retry-count", 0))
 
     def _coerce_event(self, payload: dict[str, Any]) -> ThreatEvent:
+        metadata = payload.get("metadata") or {}
+        
         event_payload = {
             "event_id": str(payload.get("event_id") or payload.get("eventId") or uuid4()),
             "correlation_id": str(
@@ -109,23 +124,25 @@ class ThreatEventConsumer:
                 or uuid4()
             ),
             "user_id": str(payload.get("user_id") or payload.get("userId") or payload.get("email") or "unknown"),
-            "origin_ip": payload.get("origin_ip") or payload.get("originIp") or payload.get("ip") or "127.0.0.1",
+            "origin_ip": payload.get("origin_ip") or payload.get("originIp") or payload.get("ipAddress") or payload.get("ip") or "127.0.0.1",
             "payload_text": str(
                 payload.get("payload_text")
                 or payload.get("payloadText")
-                or payload.get("message")
-                or payload.get("email")
+                or metadata.get("payloadText")
+                or metadata.get("payload_text")
                 or ""
             ),
-            "burst_velocity": float(payload.get("burst_velocity") or payload.get("burstVelocity") or 0.0),
+            "burst_velocity": float(
+                payload.get("burst_velocity") or payload.get("burstVelocity") or metadata.get("burstVelocity") or metadata.get("burst_velocity") or 0.0
+            ),
             "target_recipient_ratio": float(
-                payload.get("target_recipient_ratio") or payload.get("targetRecipientRatio") or 0.0
+                payload.get("target_recipient_ratio") or payload.get("targetRecipientRatio") or metadata.get("targetRecipientRatio") or metadata.get("target_recipient_ratio") or 0.0
             ),
             "uri_hyperlink_density": float(
-                payload.get("uri_hyperlink_density") or payload.get("uriHyperlinkDensity") or 0.0
+                payload.get("uri_hyperlink_density") or payload.get("uriHyperlinkDensity") or metadata.get("uriHyperlinkDensity") or metadata.get("uri_hyperlink_density") or 0.0
             ),
             "session_dwell_duration": float(
-                payload.get("session_dwell_duration") or payload.get("sessionDwellDuration") or 0.0
+                payload.get("session_dwell_duration") or payload.get("sessionDwellDuration") or metadata.get("sessionDwellDuration") or metadata.get("session_dwell_duration") or 0.0
             ),
         }
         return ThreatEvent.model_validate(event_payload)

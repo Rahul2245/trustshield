@@ -17,6 +17,7 @@ class ThreatMatrix(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
         populate_by_name=True,
+        protected_namespaces=(),
     )
 
     event_id: str = Field(

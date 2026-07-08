@@ -6,6 +6,7 @@ class RedisClient {
     private client: Redis;
 
     constructor() {
+        // console.log(env.REDIS_URL);
         this.client = new Redis(env.REDIS_URL, {
             maxRetriesPerRequest: null,
             retryStrategy(times) {

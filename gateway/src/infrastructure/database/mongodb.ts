@@ -5,10 +5,10 @@ import { logger } from "../../infrastructure/logger/logger";
 
 export async function connectMongoDB(): Promise<void> {
     try {
-        console.log("Type:", typeof databaseConfig.uri);
-console.log("Raw:", databaseConfig.uri);
-console.log("JSON:", JSON.stringify(databaseConfig.uri));
-console.log("Length:", databaseConfig.uri.length);
+//         console.log("Type:", typeof databaseConfig.uri);
+// console.log("Raw:", databaseConfig.uri);
+// console.log("JSON:", JSON.stringify(databaseConfig.uri));
+// console.log("Length:", databaseConfig.uri.length);
         await mongoose.connect(databaseConfig.uri, {
             dbName: databaseConfig.dbName,
         });

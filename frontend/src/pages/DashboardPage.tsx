@@ -12,11 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getActionColor } from "@/lib/utils";
 import { getDashboardStats, getThreatTrend, getAlerts } from "@/services/api";
 import type { DashboardStats, ThreatAlert, TrendPoint } from "@/types";
 import { Shield, Activity, AlertTriangle } from "lucide-react";

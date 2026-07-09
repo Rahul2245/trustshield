@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, MapPin, Link as LinkIcon, Calendar, Github, Twitter, Award, Shield } from "lucide-react";
+import { User, MapPin, Link as LinkIcon, Calendar, Globe, Hash, Award, Shield } from "lucide-react";
 
 export const UserProfilePage: React.FC = () => {
   return (
@@ -38,10 +38,10 @@ export const UserProfilePage: React.FC = () => {
                  
                  <div className="flex gap-3">
                     <button className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
-                       <Github size={18} />
+                       <Hash size={18} />
                     </button>
                     <button className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
-                       <Twitter size={18} />
+                       <Globe size={18} />
                     </button>
                  </div>
               </div>

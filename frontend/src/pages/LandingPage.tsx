@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageSquare, Shield, Users } from "lucide-react";
+import { MessageSquare, Shield, Users } from "lucide-react";
 
 export const LandingPage: React.FC = () => {
   return (

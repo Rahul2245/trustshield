@@ -15,6 +15,9 @@ import { UsersPage } from "@/pages/UsersPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { CommunityPage } from "@/pages/CommunityPage";
 import { PostDetailPage } from "@/pages/PostDetailPage";
+import { UserLoginPage } from "@/pages/auth/UserLoginPage";
+import { UserRegisterPage } from "@/pages/auth/UserRegisterPage";
+import { UserProfilePage } from "@/pages/UserProfilePage";
 import { useAuthStore } from "@/store/auth";
 
 export default function App() {
@@ -33,7 +36,10 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/community/post/:postId" element={<PostDetailPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/login" element={<UserLoginPage />} />
+        <Route path="/register" element={<UserRegisterPage />} />
+        <Route path="/admin/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/alerts" element={<AlertsPage />} />

@@ -1,6 +1,6 @@
 export interface ThreatEvent {
     eventId: string;
-    eventType: 'ThreatLoginEvent' | 'ThreatRegistrationEvent';
+    eventType: 'ThreatLoginEvent' | 'ThreatRegistrationEvent' | 'ThreatPostEvent' | string;
     userId: string;
     email: string;
     ipAddress: string;

@@ -62,111 +62,96 @@ export function DashboardPage() {
   );
 
   return (
-    <div className="space-y-10 min-h-screen pb-12">
+    <div className="space-y-6 min-h-screen pb-12 font-sans bg-[#111111]">
       {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-2">
-            Trust & Safety <span className="text-orange-500">Console</span>
-          </h1>
-          <p className="text-lg text-slate-500 max-w-xl">
-            Real-time threat intelligence protecting the community from spam, account takeovers, and social engineering.
-          </p>
-        </div>
-        <div className="relative z-10">
-          <Link
-            to="/alerts"
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-medium text-white hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
-          >
-            <Activity size={16} /> Live Feed
-          </Link>
-        </div>
-        {/* Background glow */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
-        {/* Phase 8: System Monitors */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
-              <div>
-                 <p className="text-slate-400 text-sm font-medium mb-1">Gateway</p>
-                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Online</p>
-              </div>
-           </div>
-           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
-              <div>
-                 <p className="text-slate-400 text-sm font-medium mb-1">Redis</p>
-                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Connected</p>
-              </div>
-           </div>
-           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
-              <div>
-                 <p className="text-slate-400 text-sm font-medium mb-1">RabbitMQ</p>
-                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Queues Healthy</p>
-              </div>
-           </div>
-           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
-              <div>
-                 <p className="text-slate-400 text-sm font-medium mb-1">AI Worker</p>
-                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Processing</p>
-              </div>
-           </div>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-           <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-                 <AlertTriangle size={18} />
-              </div>
-              <h3 className="font-semibold text-slate-700">High-Risk Threats</h3>
-           </div>
-           <div className="text-4xl font-bold text-slate-900 mb-2">{stats?.threats.highRiskCount ?? 0}</div>
-           <p className="text-sm text-slate-500">Active threats requiring attention</p>
-        </div>
-        
-        <div className="bg-gradient-to-br from-orange-400 to-orange-600 p-6 rounded-3xl shadow-lg border border-orange-500 text-white relative overflow-hidden">
-           <div className="flex items-center gap-3 mb-4 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
-                 <Shield size={18} />
-              </div>
-              <h3 className="font-semibold">Events Scanned</h3>
-           </div>
-           <div className="text-4xl font-bold mb-2 relative z-10">{stats?.threats.todayThreats ?? 0}</div>
-           <p className="text-orange-100 text-sm relative z-10">Today's AI processing volume</p>
-           
-           <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white rounded-full opacity-10" />
-           <div className="absolute top-4 -right-4 w-16 h-16 bg-white rounded-full opacity-10" />
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-           <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                 <Activity size={18} />
-              </div>
-              <h3 className="font-semibold text-slate-700">Pending Alerts</h3>
-           </div>
-           <div className="text-4xl font-bold text-slate-900 mb-2">{stats?.unacknowledgedAlerts ?? 0}</div>
-           <p className="text-sm text-slate-500">Unacknowledged system alerts</p>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-white">Trust & Safety <span className="text-[#00FF9D]">Overview</span></h1>
+        <div className="flex items-center gap-4">
+          <select className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-sm rounded-lg px-4 py-2 focus:outline-none focus:border-[#00FF9D]">
+            <option>Last 24 Hours</option>
+            <option>Last 7 Days</option>
+            <option>Last 30 Days</option>
+          </select>
+          <button className="bg-[#00FF9D]/10 text-[#00FF9D] border border-[#00FF9D]/20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#00FF9D]/20 transition-colors">
+            Export Report
+          </button>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-[#00FF9D]/50 transition-colors">
+           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={64} className="text-[#00FF9D]"/></div>
+           <p className="text-gray-400 text-sm font-medium mb-2">Total Events Scanned</p>
+           <h2 className="text-4xl font-bold text-white mb-4">{stats?.threats.todayThreats ?? 0}</h2>
+           <p className="text-xs text-[#00FF9D] flex items-center gap-1">+12.5% <span className="text-gray-500">vs last period</span></p>
+        </div>
+        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-red-500/50 transition-colors">
+           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-red-500"><AlertTriangle size={64}/></div>
+           <p className="text-gray-400 text-sm font-medium mb-2">Pending Alerts</p>
+           <h2 className="text-4xl font-bold text-white mb-4">{stats?.unacknowledgedAlerts ?? 0}</h2>
+           <p className="text-xs text-red-400 flex items-center gap-1">+5.2% <span className="text-gray-500">vs last period</span></p>
+        </div>
+        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-blue-500/50 transition-colors">
+           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-[#00FF9D]"><Activity size={64}/></div>
+           <p className="text-gray-400 text-sm font-medium mb-2">AI Confidence Score</p>
+           <h2 className="text-4xl font-bold text-white mb-4">98.5%</h2>
+           <p className="text-xs text-[#00FF9D] flex items-center gap-1">+0.8% <span className="text-gray-500">accuracy rating</span></p>
+        </div>
+      </div>
+
+      {/* Phase 8: System Monitors */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] flex items-center justify-between">
+            <div>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Gateway</p>
+               <p className="text-white text-sm font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#00FF9D]"></span> Online</p>
+            </div>
+         </div>
+         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] flex items-center justify-between">
+            <div>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Redis</p>
+               <p className="text-white text-sm font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#00FF9D]"></span> Connected</p>
+            </div>
+         </div>
+         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] flex items-center justify-between">
+            <div>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">RabbitMQ</p>
+               <p className="text-white text-sm font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#00FF9D]"></span> Queues Healthy</p>
+            </div>
+         </div>
+         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] flex items-center justify-between">
+            <div>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">AI Worker</p>
+               <p className="text-[#00FF9D] text-sm font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span> Processing</p>
+            </div>
+         </div>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-           <h3 className="text-xl font-bold mb-6">Threat Velocity</h3>
+        <div className="lg:col-span-2 bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
+           <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-white">Threat Volume Map</h3>
+              <div className="flex gap-2 text-xs font-medium">
+                 <span className="px-2 py-1 rounded bg-[#00FF9D]/10 text-[#00FF9D]">1H</span>
+                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">4H</span>
+                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">1D</span>
+                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">1W</span>
+              </div>
+           </div>
            <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trend}>
-                <XAxis dataKey="_id" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.slice(5)} />
-                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                <Bar dataKey="count" fill="#f97316" radius={[6, 6, 0, 0]} />
+                <XAxis dataKey="_id" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.slice(5)} />
+                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{fill: '#2a2a2a'}} contentStyle={{backgroundColor: '#1E1E1E', borderColor: '#2a2a2a', borderRadius: '8px', color: '#fff'}} itemStyle={{ color: '#00FF9D' }} />
+                <Bar dataKey="count" fill="#00FF9D" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
            </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col">
-           <h3 className="text-xl font-bold mb-6">Action Breakdown</h3>
+        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] flex flex-col">
+           <h3 className="text-lg font-bold text-white mb-6">Action Breakdown</h3>
            <div className="flex-1 min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -175,13 +160,13 @@ export function DashboardPage() {
                     <Cell key={entry.name} fill={ACTION_COLORS[entry.name] ?? "#94a3b8"} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Tooltip contentStyle={{backgroundColor: '#1E1E1E', borderColor: '#2a2a2a', borderRadius: '8px', color: '#fff'}} />
               </PieChart>
             </ResponsiveContainer>
            </div>
            <div className="mt-4 flex flex-wrap justify-center gap-2">
               {actionData.map((item) => (
-                <div key={item.name} className="px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700 flex items-center gap-2">
+                <div key={item.name} className="px-3 py-1 bg-[#111111] rounded-full border border-[#2a2a2a] text-xs font-medium text-gray-300 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{backgroundColor: ACTION_COLORS[item.name] || '#94a3b8'}} />
                   {item.name}: {item.value}
                 </div>
@@ -191,30 +176,30 @@ export function DashboardPage() {
       </div>
       
       {/* Recent Alerts Section */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+      <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold">Recent Alerts</h3>
-            <Link to="/alerts" className="text-sm font-medium text-orange-500 hover:text-orange-600">View All</Link>
+            <h3 className="text-lg font-bold text-white">Recent Alerts</h3>
+            <Link to="/alerts" className="text-sm font-medium text-[#00FF9D] hover:text-[#00FF9D]/80">View All</Link>
          </div>
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentAlerts.length === 0 ? (
-                <p className="text-sm text-slate-500 col-span-3 py-8 text-center">No recent alerts</p>
+                <p className="text-sm text-gray-500 col-span-3 py-8 text-center">No recent alerts</p>
               ) : (
                 recentAlerts.map((alert) => (
-                  <div key={alert.alertId} className="bg-slate-50 rounded-2xl p-5 border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all">
+                  <div key={alert.alertId} className="bg-[#111111] rounded-lg p-5 border border-[#2a2a2a] hover:border-[#00FF9D]/50 transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                      <span className={`px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-full ${
-                          alert.severity === "CRITICAL" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                      <span className={`px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${
+                          alert.severity === "CRITICAL" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                       }`}>
                         {alert.type}
                       </span>
                       {!alert.acknowledged && (
-                        <span className="w-2 h-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
+                        <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
                       )}
                     </div>
-                    <p className="font-semibold text-slate-800 text-sm leading-snug">{alert.message}</p>
-                    <p className="mt-3 text-xs text-slate-400 font-mono bg-white px-2 py-1 rounded inline-block">
-                      Trace: {alert.correlationId.slice(0, 12)}...
+                    <p className="font-medium text-gray-200 text-sm leading-relaxed">{alert.message}</p>
+                    <p className="mt-3 text-[10px] text-gray-500 font-mono">
+                      TRACE ID: {alert.correlationId.slice(0, 12)}
                     </p>
                   </div>
                 ))
@@ -222,5 +207,7 @@ export function DashboardPage() {
          </div>
       </div>
     </div>
-  );
+  );  
+
+
 }

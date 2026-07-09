@@ -7,6 +7,7 @@ import { AdminService } from "../services/admin.service";
 
 const webhookSchema = z.object({
     event_id: z.string(),
+    event_type: z.string().default("auth_login"),
     correlation_id: z.string(),
     user_id: z.string(),
     risk_score: z.number(),

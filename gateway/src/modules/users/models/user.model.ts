@@ -8,6 +8,16 @@ export interface IUser extends Document {
   role: UserRole;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   lastLoginAt?: Date;
+  
+  // Social Platform Fields
+  avatar?: string;
+  coverImage?: string;
+  bio?: string;
+  socialLinks?: Record<string, string>;
+  followers?: mongoose.Types.ObjectId[];
+  following?: mongoose.Types.ObjectId[];
+  badges?: string[];
+  
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -18,7 +28,16 @@ const UserSchema: Schema = new Schema({
   password: { type: String, required: true },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
   status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
-  lastLoginAt: { type: Date }
+  lastLoginAt: { type: Date },
+  
+  // Social Platform Fields
+  avatar: { type: String, default: null },
+  coverImage: { type: String, default: null },
+  bio: { type: String, default: '', maxlength: 500 },
+  socialLinks: { type: Map, of: String, default: {} },
+  followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  badges: [{ type: String }]
 }, {
   timestamps: true
 });

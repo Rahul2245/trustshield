@@ -12,6 +12,9 @@ import { SystemHealthPage } from "@/pages/SystemHealthPage";
 import { ThreatDetailPage } from "@/pages/ThreatDetailPage";
 import { ThreatsPage } from "@/pages/ThreatsPage";
 import { UsersPage } from "@/pages/UsersPage";
+import { LandingPage } from "@/pages/LandingPage";
+import { CommunityPage } from "@/pages/CommunityPage";
+import { PostDetailPage } from "@/pages/PostDetailPage";
 import { useAuthStore } from "@/store/auth";
 
 export default function App() {
@@ -27,6 +30,9 @@ export default function App() {
       <Toaster />
       {isAuthenticated && <AlertListener />}
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/community/post/:postId" element={<PostDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -39,7 +45,7 @@ export default function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+          element={<Navigate to="/" replace />}
         />
       </Routes>
     </BrowserRouter>

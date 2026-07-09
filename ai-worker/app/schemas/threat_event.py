@@ -25,6 +25,11 @@ class ThreatEvent(BaseModel):
         description="Unique identifier for this specific event.",
     )
 
+    event_type: str = Field(
+        default="auth_login",
+        description="The type of event (e.g. auth_login, new_post, new_comment).",
+    )
+
     correlation_id: str = Field(
         ...,
         description="Identifier used to trace the event across microservices.",

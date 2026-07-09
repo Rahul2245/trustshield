@@ -4,8 +4,11 @@ import { broadcastThreatAlert, ThreatAlertPayload } from "../../../infrastructur
 import { AdminRepository } from "../repositories/admin.repository";
 import { IAdminAlert } from "../models/admin-alert.model";
 
+import { PostModel } from "../../posts/models/post.model";
+
 export interface WebhookPayload {
     event_id: string;
+    event_type?: string;
     correlation_id: string;
     user_id: string;
     risk_score: number;
@@ -24,6 +27,29 @@ export class AdminService {
         const severity = this.resolveSeverity(payload.risk_score, payload.action);
         const alertType = this.resolveAlertType(payload.action);
 
+        // Update Post or Comment based on event_type
+        if (payload.event_type === "new_post") {
+            const status = payload.action === "ALLOW" ? "APPROVED" : (payload.action === "BLOCK" ? "REJECTED" : "PENDING");
+            
+            await PostModel.findByIdAndUpdate(payload.event_id, {
+                status,
+                isFlagged: payload.action !== "ALLOW",
+                threatScore: payload.risk_score,
+                aiVerdict: payload.action === "BLOCK" || payload.action === "SHADOW",
+            });
+        } else if (payload.event_type === "new_comment") {
+            // Need to require CommentModel at the top or dynamically import to avoid circular dep if any, but let's assume it's imported
+            const { CommentModel } = require("../../comments/models/comment.model");
+            const status = payload.action === "ALLOW" ? "APPROVED" : (payload.action === "BLOCK" ? "REJECTED" : "PENDING");
+            
+            await CommentModel.findByIdAndUpdate(payload.event_id, {
+                status,
+                isFlagged: payload.action !== "ALLOW",
+                threatScore: payload.risk_score,
+                aiVerdict: payload.action === "BLOCK" || payload.action === "SHADOW",
+            });
+        }
+
         const alert = await this.adminRepository.createAlert({
             alertId: uuidv4(),
             eventId: payload.event_id,
@@ -34,7 +60,7 @@ export class AdminService {
             riskScore: payload.risk_score,
             action: payload.action,
             message: `AI evaluation complete: ${payload.action} (risk ${payload.risk_score.toFixed(1)})`,
-            metadata: { source: "ai-worker" },
+            metadata: { source: "ai-worker", event_type: payload.event_type },
         });
 
         this.broadcastAlert(alert);

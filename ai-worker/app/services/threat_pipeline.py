@@ -93,6 +93,7 @@ class ThreatPipeline:
 
         webhook_payload = WebhookPayload(
             event_id=event.event_id,
+            event_type=event.event_type,
             correlation_id=event.correlation_id,
             user_id=event.user_id,
             risk_score=fusion_result.risk_score,

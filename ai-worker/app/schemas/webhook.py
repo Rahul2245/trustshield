@@ -21,6 +21,11 @@ class WebhookPayload(BaseModel):
         description="Unique identifier linking back to the original ThreatEvent.",
     )
 
+    event_type: str = Field(
+        default="auth_login",
+        description="The type of event.",
+    )
+
     correlation_id: str = Field(
         ...,
         description="Trace identifier for tracking.",

@@ -116,6 +116,7 @@ class ThreatEventConsumer:
         
         event_payload = {
             "event_id": str(payload.get("event_id") or payload.get("eventId") or uuid4()),
+            "event_type": str(payload.get("event_type") or payload.get("eventType") or "auth_login"),
             "correlation_id": str(
                 payload.get("correlation_id")
                 or payload.get("correlationId")

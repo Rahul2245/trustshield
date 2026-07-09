@@ -55,8 +55,11 @@ export function initializeSocketServer(httpServer: HttpServer): Server {
 
             const decoded = jwt.verify(token, jwtConfig.accessSecret) as SocketAuthPayload;
 
-            if (decoded.role !== UserRole.ADMIN && decoded.role !== UserRole.ANALYST) {
-                return next(new Error("Admin access required"));
+            // Allow both ADMINs and regular USERs for different rooms
+            if (decoded.role === UserRole.ADMIN || decoded.role === UserRole.ANALYST) {
+                socket.data.isAdmin = true;
+            } else {
+                socket.data.isAdmin = false;
             }
 
             socket.data.user = decoded;
@@ -68,14 +71,25 @@ export function initializeSocketServer(httpServer: HttpServer): Server {
     });
 
     io.on("connection", (socket: Socket) => {
-        socket.join(SECURITY_ADMIN_ROOM);
-        logger.info(
-            { userId: socket.data.user?.userId, socketId: socket.id },
-            "Admin connected to security room"
-        );
+        const userId = socket.data.user?.userId;
+        
+        // Join personalized notification room
+        if (userId) {
+            socket.join(`user_${userId}`);
+        }
+
+        // Admins join security room
+        if (socket.data.isAdmin) {
+            socket.join(SECURITY_ADMIN_ROOM);
+            logger.info({ userId, socketId: socket.id }, "Admin connected to security room");
+        } else {
+            // Regular users join public feed room
+            socket.join("public_feed");
+            logger.info({ userId, socketId: socket.id }, "User connected to public feed");
+        }
 
         socket.on("disconnect", () => {
-            logger.info({ socketId: socket.id }, "Admin disconnected from security room");
+            logger.info({ socketId: socket.id }, "Socket disconnected");
         });
     });
 
@@ -88,11 +102,27 @@ export function getSocketServer(): Server | null {
 }
 
 export function broadcastThreatAlert(alert: ThreatAlertPayload): void {
-    if (!io) {
-        logger.warn("Socket.io not initialized; alert not broadcast");
-        return;
-    }
-
+    if (!io) return;
     io.to(SECURITY_ADMIN_ROOM).emit("threat:alert", alert);
     logger.info({ alertId: alert.alertId, type: alert.type }, "Threat alert broadcast");
+}
+
+export function broadcastNewPost(post: any): void {
+    if (!io) return;
+    io.to("public_feed").emit("feed:new_post", post);
+}
+
+export function broadcastNewComment(comment: any): void {
+    if (!io) return;
+    io.to("public_feed").emit("feed:new_comment", comment);
+}
+
+export function broadcastUserNotification(userId: string, notification: any): void {
+    if (!io) return;
+    io.to(`user_${userId}`).emit("user:notification", notification);
+}
+
+export function broadcastSystemMetrics(metrics: any): void {
+    if (!io) return;
+    io.to(SECURITY_ADMIN_ROOM).emit("dashboard:metrics", metrics);
 }

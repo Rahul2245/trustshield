@@ -1,48 +1,61 @@
-import Redis from "ioredis";
-import { env } from "../../config/env";
-import { logger } from "../logger/logger";
+import { createClient } from 'redis';
+import { env } from '../../config/env';
+import { logger } from '../logger/logger';
 
-class RedisClient {
-    private client: Redis;
+class RedisService {
+  private client;
+  private isConnected = false;
 
-    constructor() {
-        // console.log(env.REDIS_URL);
-        this.client = new Redis(env.REDIS_URL, {
-            maxRetriesPerRequest: null,
-            retryStrategy(times) {
-                const delay = Math.min(times * 50, 2000);
-                return delay;
-            }
-        });
+  constructor() {
+    this.client = createClient({
+      url: env.REDIS_URI || 'redis://localhost:6379',
+    });
 
-        this.client.on("connect", () => {
-            logger.info("Redis connected successfully");
-        });
+    this.client.on('error', (err) => logger.error('Redis Client Error', err));
+    this.client.on('connect', () => {
+      this.isConnected = true;
+      logger.info('Connected to Redis successfully');
+    });
+    this.client.on('end', () => {
+      this.isConnected = false;
+      logger.warn('Redis connection closed');
+    });
+  }
 
-        this.client.on("error", (err) => {
-            logger.error(err, "Redis connection error");
-        });
+  public async connect() {
+    if (!this.isConnected) {
+      await this.client.connect();
     }
+  }
 
-    public getClient(): Redis {
-        return this.client;
-    }
+  public getClient() {
+    return this.client;
+  }
 
-    public async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-        if (ttlSeconds) {
-            await this.client.setex(key, ttlSeconds, value);
-        } else {
-            await this.client.set(key, value);
-        }
+  // Phase 5 Implementations
+  public async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (!this.isConnected) return; // Soft fallback
+    await this.client.set(key, value);
+    if (ttlSeconds) {
+      await this.client.expire(key, ttlSeconds);
     }
+  }
 
-    public async get(key: string): Promise<string | null> {
-        return this.client.get(key);
-    }
+  public async get(key: string): Promise<string | null> {
+    if (!this.isConnected) return null; // Soft fallback
+    return await this.client.get(key);
+  }
 
-    public async del(key: string): Promise<void> {
-        await this.client.del(key);
-    }
+  public async blacklistToken(token: string, expiresIn: number): Promise<void> {
+    if (!this.isConnected) return;
+    await this.set(`bl_${token}`, 'blacklisted', expiresIn);
+  }
+
+  public async isTokenBlacklisted(token: string): Promise<boolean> {
+    if (!this.isConnected) return false; // Fail open if Redis crashes
+    const val = await this.get(`bl_${token}`);
+    return val !== null;
+  }
 }
 
-export const redis = new RedisClient();
+export const redisService = new RedisService();

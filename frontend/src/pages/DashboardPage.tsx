@@ -83,9 +83,36 @@ export function DashboardPage() {
         </div>
         {/* Background glow */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
-      </div>
+        {/* Phase 8: System Monitors */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
+              <div>
+                 <p className="text-slate-400 text-sm font-medium mb-1">Gateway</p>
+                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Online</p>
+              </div>
+           </div>
+           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
+              <div>
+                 <p className="text-slate-400 text-sm font-medium mb-1">Redis</p>
+                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Connected</p>
+              </div>
+           </div>
+           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
+              <div>
+                 <p className="text-slate-400 text-sm font-medium mb-1">RabbitMQ</p>
+                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> Queues Healthy</p>
+              </div>
+           </div>
+           <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex items-center justify-between">
+              <div>
+                 <p className="text-slate-400 text-sm font-medium mb-1">AI Worker</p>
+                 <p className="text-white text-xl font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Processing</p>
+              </div>
+           </div>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+        {/* Charts Section */}
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center">

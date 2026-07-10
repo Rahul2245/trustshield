@@ -44,8 +44,18 @@
 - Highlight the new user-facing features: Member grids, "Verified" badges, and community tags.
 - Explain how users interact with the system entirely separately from the administrative portal.
 
-### 5. Conclusion & E2E Validation (1 min)
-- To further prove system robustness, execute the End-to-End test script in the terminal:
+### 5. Security Matrix Validations (1 min)
+- To further prove system robustness, execute the End-to-End security test script in the terminal:
+  ```bash
+  cd gateway
+  npx ts-node scripts/security-test.ts
+  ```
+- Explain what the script tests:
+  1. **Dormant Account Takeover**: Simulates logging in with an account that hasn't logged in for 180+ days. The Gateway intercepts it, changes status to INACTIVE, and returns a `202 Accepted` to initiate step-up email MFA.
+  2. **Redis Brute-Force Rate Limiting**: Simulates a credential stuffing attack by hammering the login endpoint. The Redis edge gateway layer catches it instantly and returns a `429 Too Many Requests`.
+
+### 6. Conclusion & AI E2E Validation (1 min)
+- Execute the End-to-End AI pipeline test script in the terminal:
   ```bash
   cd gateway
   npx ts-node scripts/e2e-test.ts

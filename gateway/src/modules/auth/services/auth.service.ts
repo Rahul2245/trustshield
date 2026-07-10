@@ -53,6 +53,18 @@ export class AuthService {
         if (user.status === "SUSPENDED") {
             throw new AppError("Account suspended.", 403, "ACCOUNT_SUSPENDED");
         }
+        if (user.status === "INACTIVE") {
+            throw new AppError("Account locked due to 180+ days of inactivity. Please contact support.", 403, "ACCOUNT_INACTIVE");
+        }
+
+        if (user.lastLoginAt) {
+            const daysSinceLastLogin = (new Date().getTime() - user.lastLoginAt.getTime()) / (1000 * 3600 * 24);
+            if (daysSinceLastLogin >= 180) {
+                const { UserModel } = require("../../users/models/user.model");
+                await UserModel.findByIdAndUpdate(user._id, { status: 'INACTIVE' });
+                throw new AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 202, "OTP_REQUIRED");
+            }
+        }
 
         const isMatch = await user.comparePassword(userData.password);
         if (!isMatch) {

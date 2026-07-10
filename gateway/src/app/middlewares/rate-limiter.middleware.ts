@@ -27,14 +27,15 @@ export const rateLimiterMiddleware = async (
 
         // Use safe redisService methods - gracefully skip if Redis is down
         try {
-            const ipCountStr = await redisService.get(ipTrackingKey);
-            const accountCountStr = await redisService.get(accountTrackingKey);
+            const client = redisService.getClient();
+            
+            const ipCount = await client.incr(ipTrackingKey);
+            if (ipCount === 1) await client.expire(ipTrackingKey, windowSeconds);
 
-            const ipCount = ipCountStr ? parseInt(ipCountStr, 10) + 1 : 1;
-            const accountCount = accountCountStr ? parseInt(accountCountStr, 10) + 1 : 1;
+            const accountCount = await client.incr(accountTrackingKey);
+            if (accountCount === 1) await client.expire(accountTrackingKey, windowSeconds);
 
-            await redisService.set(ipTrackingKey, String(ipCount), ipCount === 1 ? windowSeconds : undefined);
-            await redisService.set(accountTrackingKey, String(accountCount), accountCount === 1 ? windowSeconds : undefined);
+            console.log("DEBUG RATE LIMIT", { ipTrackingKey, accountTrackingKey, ipCount, accountCount });
 
             if (ipCount > maxRequests || accountCount > maxRequests) {
                 adminService.createRateLimitAlert({

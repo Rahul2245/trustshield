@@ -13,7 +13,8 @@ async function bootstrap() {
         logger.info("Starting TrustShield Gateway...");
 
         await connectMongoDB();
-
+        const { redisService } = require('./infrastructure/redis/redis');
+        await redisService.connect();
         await rabbitMQClient.connect();
 
         const httpServer = createServer(app);

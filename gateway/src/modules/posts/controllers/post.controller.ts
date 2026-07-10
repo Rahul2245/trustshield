@@ -20,14 +20,25 @@ export class PostController {
 
       // Push to RabbitMQ for AI validation
       const payload = {
-        event_id: post._id.toString(),
-        event_type: 'new_post',
-        user_id: post.author.toString(),
-        payload_text: post.content,
+        eventId: post._id.toString(),
+        eventType: 'NEW_POST',
+        userId: post.author.toString(),
+        email: "unknown@example.com", // Fetch if possible or leave dummy
+        ipAddress: req.ip || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        correlationId: require('crypto').randomUUID(),
+        requestId: require('crypto').randomUUID(),
+        metadata: {
+          burstVelocity: 0,
+          targetRecipientRatio: 0,
+          uriHyperlinkDensity: 0,
+          sessionDwellDuration: 0,
+          payloadText: post.content
+        },
         timestamp: new Date().toISOString()
       };
 
-      await rabbitMQClient.publishMessage('security.threat_analysis_queue', payload);
+      await rabbitMQClient.publishThreatEvent(payload);
       logger.info(`Post ${post._id} sent to AI validation queue`);
 
       res.status(202).json({

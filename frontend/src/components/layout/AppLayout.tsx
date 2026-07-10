@@ -69,11 +69,11 @@ export function AppLayout({ children }: AppLayoutProps) {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
+            <Button onClick={() => { import('sonner').then(m => m.toast.info('Notifications feature coming soon!')); }} variant="ghost" size="icon" className="relative text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
               <Bell className="h-5 w-5" />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#00FF9D] animate-pulse" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
+            <Button onClick={() => { import('sonner').then(m => m.toast.info('Settings feature coming soon!')); }} variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
               <Settings className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3 bg-[#111111] border border-[#2a2a2a] rounded-full pl-1 pr-4 py-1">

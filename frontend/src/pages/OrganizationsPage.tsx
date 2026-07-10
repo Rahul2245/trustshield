@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Shield, ArrowRight, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 export const OrganizationsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("explore");
@@ -13,13 +14,21 @@ export const OrganizationsPage: React.FC = () => {
     { id: 'org-5', name: 'Cloud Computing Hub', members: 7800, isVerified: false, description: 'AWS, GCP, and Azure discussions.', tags: ['Cloud', 'DevOps'] },
   ]);
 
+  const handleOrgClick = (orgName: string) => {
+    toast.info(`Navigating to ${orgName}...`);
+  };
+
+  const handleCreateOrg = () => {
+    toast.info("Create Organization feature coming soon!");
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex items-center justify-between">
         <Link to="/community" className="text-xl font-bold tracking-tight text-slate-900">EchoSphere</Link>
         <div className="flex items-center gap-4">
            <Link to="/community" className="text-sm font-medium hover:text-orange-600 transition-colors">Feed</Link>
-           <button className="px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-medium hover:bg-slate-800 transition-colors flex items-center gap-2">
+           <button onClick={handleCreateOrg} className="px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-medium hover:bg-slate-800 transition-colors flex items-center gap-2">
              <Plus size={16} /> Create Org
            </button>
         </div>
@@ -43,7 +52,7 @@ export const OrganizationsPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
            {orgs.map(org => (
-             <div key={org.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group cursor-pointer relative overflow-hidden flex flex-col">
+             <div key={org.id} onClick={() => handleOrgClick(org.name)} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group cursor-pointer relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-600 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
                    <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center relative">

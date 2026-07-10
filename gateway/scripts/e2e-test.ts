@@ -17,44 +17,64 @@ async function runE2ETest() {
     const user = await UserModel.findOne({ role: UserRole.USER });
     if (!user) throw new Error('No user found in DB');
 
-    // Create a highly malicious spam post
-    const spamContent = "URGENT! FREE CRYPTO AIRDROP CLICK HERE TO CLAIM 1000 USDT IMMEDIATELY!!! http://scam.phishing-crypto.link/airdrop";
-    
-    logger.info(`Simulating user ${user.email} posting: "${spamContent}"`);
-    
-    const post = new PostModel({
-      content: spamContent,
-      author: user._id,
-      status: 'PENDING'
-    });
-    await post.save();
+    const testCases = [
+      {
+        type: 'NORMAL',
+        content: "Hey everyone! I just published a new article on React performance optimization. Let me know what you think!"
+      },
+      {
+        type: 'PHISHING_SPAM',
+        content: "URGENT! FREE CRYPTO AIRDROP CLICK HERE TO CLAIM 1000 USDT IMMEDIATELY!!! http://scam.phishing-crypto.link/airdrop"
+      },
+      {
+        type: 'HATE_SPEECH',
+        content: "I absolutely hate everyone from that country. They should all be kicked out. Disgusting people."
+      }
+    ];
 
-    // Push to RabbitMQ (Gateway -> AI Worker)
-    logger.info('Publishing event to RabbitMQ: security.threat_analysis_queue');
-    await rabbitMQClient.publishThreatEvent({
-      eventId: post._id.toString(),
-      correlationId: randomUUID(),
-      eventType: 'NEW_POST',
-      userId: user._id.toString(),
-      email: user.email,
-      ipAddress: '127.0.0.1',
-      userAgent: 'E2E-Script',
-      requestId: 'e2e-test-request',
-      metadata: {
-        burstVelocity: 0,
-        targetRecipientRatio: 0,
-        uriHyperlinkDensity: 0,
-        sessionDwellDuration: 0,
-        payloadText: "Claim your free crypto airdrop here: http://malicious.link/airdrop",
-      },timestamp: new Date().toISOString()
-    });
+    for (const testCase of testCases) {
+      logger.info(`\n--- Running Test Case: ${testCase.type} ---`);
+      logger.info(`Simulating user ${user.email} posting: "${testCase.content}"`);
+      
+      const post = new PostModel({
+        content: testCase.content,
+        author: user._id,
+        status: 'PENDING'
+      });
+      await post.save();
 
-    logger.info('✅ Event published successfully. The AI Worker should consume it and trigger a webhook back to the Gateway.');
-    logger.info('Check the Admin Dashboard to see the new critical alert broadcast via Socket.IO!');
+      // Push to RabbitMQ (Gateway -> AI Worker)
+      logger.info('Publishing event to RabbitMQ: security.threat_analysis_queue');
+      await rabbitMQClient.publishThreatEvent({
+        eventId: post._id.toString(),
+        correlationId: randomUUID(),
+        eventType: 'NEW_POST',
+        userId: user._id.toString(),
+        email: user.email,
+        ipAddress: '127.0.0.1',
+        userAgent: 'E2E-Script',
+        requestId: `e2e-test-${testCase.type.toLowerCase()}`,
+        metadata: {
+          burstVelocity: 0,
+          targetRecipientRatio: 0,
+          uriHyperlinkDensity: 0,
+          sessionDwellDuration: 0,
+          payloadText: testCase.content,
+        },
+        timestamp: new Date().toISOString()
+      });
+
+      logger.info(`✅ ${testCase.type} event published successfully.`);
+      // Short delay between messages
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    logger.info('\n✅ All test events published. The AI Worker should consume them and trigger a webhook back to the Gateway for threats.');
+    logger.info('Check the Admin Dashboard to see the new critical alerts broadcast via Socket.IO!');
 
     setTimeout(() => {
       process.exit(0);
-    }, 2000);
+    }, 3000);
 
   } catch (error) {
     logger.error(error as Error, 'E2E Test failed');

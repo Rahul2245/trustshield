@@ -18,16 +18,19 @@
 - Highlight the **Live Threat Analytics** and **System Monitors** showing Gateway, Redis, RabbitMQ, and AI Worker health statuses.
 - Explain the isolated Admin routing and the Traderly-inspired UI design.
 
-### 2. Live AI Threat Analysis - The Spam Scenario (3 mins)
-- Open a **New Incognito Window**.
-- Navigate to the **Community Feed** (`http://localhost:5173/community`).
+### 2. Live AI Threat Analysis - End-to-End Scenarios (4 mins)
+- Open a **New Incognito Window** and navigate to the **Community Feed** (`http://localhost:5173/community`).
 - Login as a regular user (e.g., `user1@community.org` / `password123`) or register a new account.
-- **Action**: Post a new message with malicious intent: 
-  > "Claim your free crypto airdrop here: http://malicious.link/airdrop"
-- **Result**: The post will briefly show as "Pending".
-- Switch back to the **Admin Dashboard** window.
-- **Action**: Navigate to the **Alerts** page (`http://localhost:5173/alerts`).
-- **Result**: Demonstrate the real-time Socket.io push notification. The spam message will appear as a `CRITICAL` or `HIGH` alert, having been processed asynchronously via RabbitMQ and Llama 3 on the AI Worker.
+- **Explain the testing matrix**: The AI Worker is configured to analyze intent, not just keywords.
+- We will demonstrate 3 separate scenarios using the E2E script or manual posting:
+  1. **Normal Activity (Safe)**: "Hey everyone! I just published a new article on React performance optimization." 
+     - *Result*: Analyzed by AI, marked SAFE, no alert generated.
+  2. **Phishing/Spam (Critical)**: "URGENT! FREE CRYPTO AIRDROP CLICK HERE TO CLAIM 1000 USDT IMMEDIATELY!!!" 
+     - *Result*: Instantly flagged by AI, pushes CRITICAL alert via Socket.io.
+  3. **Hate Speech (High/Critical)**: "I absolutely hate everyone from that country. They should all be kicked out."
+     - *Result*: Flagged by AI for policy violation, pushes HIGH alert.
+- Switch back to the **Admin Dashboard** window (`http://localhost:5173/alerts`).
+- Show the real-time Socket.io push notifications for the generated threats.
 
 ### 3. Real-Time Alert Management & Locking (2 mins)
 - On the **Alerts** page, click the **"Lock"** button on the new threat.

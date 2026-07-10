@@ -115,6 +115,25 @@ export class AdminService {
         return this.adminRepository.getUnacknowledgedAlertCount();
     }
 
+    public async lockAlert(alertId: string, adminId: string, ttl: number = 300) {
+        const { redisService } = require("../../../infrastructure/redis/redis");
+        const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
+        
+        const lockKey = `alert:lock:${alertId}`;
+        const locked = await redisService.setLock(lockKey, adminId, ttl);
+        
+        if (locked) {
+            // Broadcast the lock to all admins via socket.io
+            broadcastThreatAlert({
+                alertId,
+                type: 'LOCK',
+                userId: adminId,
+                message: `Alert locked by admin ${adminId}`,
+            } as any);
+        }
+        return locked;
+    }
+
     public getUsers(page: number, limit: number, status?: string) {
         return this.adminRepository.findAllUsers(page, limit, status);
     }

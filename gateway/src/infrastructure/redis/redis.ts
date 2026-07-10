@@ -8,7 +8,7 @@ class RedisService {
 
   constructor() {
     this.client = createClient({
-      url: env.REDIS_URI || 'redis://localhost:6379',
+      url: env.REDIS_URL || 'redis://localhost:6379',
     });
 
     this.client.on('error', (err) => logger.error('Redis Client Error', err));
@@ -41,6 +41,17 @@ class RedisService {
     }
   }
 
+  public async setLock(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    if (!this.isConnected) return true; // Fail open
+    const result = await this.client.set(key, value, { NX: true, EX: ttlSeconds });
+    return result === 'OK';
+  }
+
+  public async delete(key: string): Promise<void> {
+    if (!this.isConnected) return;
+    await this.client.del(key);
+  }
+
   public async get(key: string): Promise<string | null> {
     if (!this.isConnected) return null; // Soft fallback
     return await this.client.get(key);
@@ -59,3 +70,6 @@ class RedisService {
 }
 
 export const redisService = new RedisService();
+
+// Alias so both `import { redis }` and `import { redisService }` work
+export const redis = redisService;

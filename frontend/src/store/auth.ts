@@ -34,7 +34,8 @@ export const useAuthStore = create<AuthState>()(
         try {
           const result = await apiLogin(email, password);
 
-          if (result.user.role !== "ADMIN" && result.user.role !== "ANALYST") {
+          const validRoles = ["ADMIN", "ANALYST", "SUPER_ADMIN", "SECURITY_ADMIN", "MODERATOR"];
+          if (!validRoles.includes(result.user.role)) {
             throw new Error("Admin or Analyst access required");
           }
 
@@ -72,7 +73,8 @@ export const useAuthStore = create<AuthState>()(
         setAccessToken(accessToken);
         try {
           const user = await getProfile();
-          if (user.role !== "ADMIN" && user.role !== "ANALYST") {
+          const validRoles = ["ADMIN", "ANALYST", "SUPER_ADMIN", "SECURITY_ADMIN", "MODERATOR"];
+          if (!validRoles.includes(user.role)) {
             get().logout();
             return;
           }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
 
-import { redis } from "../../infrastructure/redis/redis";
+import { redisService } from "../../infrastructure/redis/redis";
 import { AppError } from "../../core/errors/AppError";
 import { AdminService } from "../../modules/admin/services/admin.service";
 import { logger } from "../../infrastructure/logger/logger";
@@ -21,38 +21,39 @@ export const rateLimiterMiddleware = async (
         const targetAccount = req.body?.email || "unknown_account";
         
         const windowSeconds = 60;
+        const maxRequests = 10;
         const ipTrackingKey = `rate:ip:${clientIp}`;
         const accountTrackingKey = `rate:account:${targetAccount}`;
 
-        const redisClient = redis.getClient();
-        
-        const results = await redisClient.multi()
-            .incr(ipTrackingKey)
-            .incr(accountTrackingKey)
-            .exec();
+        // Use safe redisService methods - gracefully skip if Redis is down
+        try {
+            const ipCountStr = await redisService.get(ipTrackingKey);
+            const accountCountStr = await redisService.get(accountTrackingKey);
 
-        if (!results || results.length !== 2) {
-            return next();
-        }
+            const ipCount = ipCountStr ? parseInt(ipCountStr, 10) + 1 : 1;
+            const accountCount = accountCountStr ? parseInt(accountCountStr, 10) + 1 : 1;
 
-        const ipCount = results[0][1] as number;
-        const accountCount = results[1][1] as number;
+            await redisService.set(ipTrackingKey, String(ipCount), ipCount === 1 ? windowSeconds : undefined);
+            await redisService.set(accountTrackingKey, String(accountCount), accountCount === 1 ? windowSeconds : undefined);
 
-        if (ipCount === 1) await redisClient.expire(ipTrackingKey, windowSeconds);
-        if (accountCount === 1) await redisClient.expire(accountTrackingKey, windowSeconds);
+            if (ipCount > maxRequests || accountCount > maxRequests) {
+                adminService.createRateLimitAlert({
+                    ipAddress: clientIp,
+                    email: req.body?.email,
+                    correlationId: req.requestId || uuidv4(),
+                }).catch(err => logger.error(err, "Failed to broadcast rate limit alert"));
 
-        if (ipCount > 5 || accountCount > 5) {
-            adminService.createRateLimitAlert({
-                ipAddress: clientIp,
-                email: req.body?.email,
-                correlationId: req.requestId || uuidv4(),
-            }).catch(err => logger.error(err, "Failed to broadcast rate limit alert"));
-
-            throw new AppError(
-                "Too many requests, please try again later.",
-                429,
-                "RATE_LIMIT_EXCEEDED"
-            );
+                throw new AppError(
+                    "Too many requests, please try again later.",
+                    429,
+                    "RATE_LIMIT_EXCEEDED"
+                );
+            }
+        } catch (redisErr) {
+            // If it's our own rate limit error, re-throw it
+            if (redisErr instanceof AppError) throw redisErr;
+            // Otherwise, Redis is just down - log and continue
+            logger.warn({ redisErr }, "Rate limiter Redis error - skipping rate limit check");
         }
 
         next();
@@ -60,3 +61,4 @@ export const rateLimiterMiddleware = async (
         next(error);
     }
 };
+

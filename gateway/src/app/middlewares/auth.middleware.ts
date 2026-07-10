@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { jwtConfig } from "../../config/jwt.config";
 import { UserRole } from "../../core/enums/user-role.enum";
 import { AppError } from "../../core/errors/AppError";
-import { redis } from "../../infrastructure/redis/redis";
+import { redisService } from "../../infrastructure/redis/redis";
 import { JwtPayload, verifyAccessToken } from "../../infrastructure/security/jwt";
 import { logger } from "../../infrastructure/logger/logger";
 
@@ -22,7 +22,7 @@ export const authMiddleware = async (
 
         const token = authHeader.split(" ")[1];
 
-        const isBlacklisted = await redis.get(`blacklist:${token}`);
+        const isBlacklisted = await redisService.get(`blacklist:${token}`);
         if (isBlacklisted) {
             throw new AppError("Token has been revoked. Please log in again.", 401, "TOKEN_REVOKED");
         }

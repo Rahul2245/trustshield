@@ -39,11 +39,14 @@ async function runE2ETest() {
       email: user.email,
       ipAddress: '127.0.0.1',
       userAgent: 'E2E-Script',
-      payload: {
-        text: spamContent,
-        metadata: { source: 'e2e_test' }
-      },
-      timestamp: new Date().toISOString()
+      requestId: 'e2e-test-request',
+      metadata: {
+        burstVelocity: 0,
+        targetRecipientRatio: 0,
+        uriHyperlinkDensity: 0,
+        sessionDwellDuration: 0,
+        payloadText: "Claim your free crypto airdrop here: http://malicious.link/airdrop",
+      },timestamp: new Date().toISOString()
     });
 
     logger.info('✅ Event published successfully. The AI Worker should consume it and trigger a webhook back to the Gateway.');

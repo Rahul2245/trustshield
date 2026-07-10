@@ -117,6 +117,22 @@ export class AdminController {
         }
     };
 
+    public lockAlert = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const locked = await this.adminService.lockAlert(
+                String(req.params.alertId),
+                req.user!.id
+            );
+            if (locked) {
+                ApiResponse.success(res, "Alert locked successfully", { locked: true });
+            } else {
+                ApiResponse.error(res, 409, "Alert is already locked by another admin");
+            }
+        } catch (error: unknown) {
+            ApiResponse.error(res, 500, "Failed to lock alert", error);
+        }
+    };
+
     public getUsers = async (req: Request, res: Response): Promise<void> => {
         try {
             const query = listQuerySchema.parse(req.query);

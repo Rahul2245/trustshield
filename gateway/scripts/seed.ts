@@ -25,7 +25,9 @@ const generateSeedData = async () => {
   const users = [];
   
   // Specific Admins
-  const adminRoles = ['SUPER_ADMIN', 'SECURITY_ADMIN', 'MODERATOR', 'ORG_MANAGER'];
+  const adminRoles = ['SUPER_ADMIN', 'MODERATOR', 'ORG_MANAGER'];
+  
+  // Base 3 admins
   for (const role of adminRoles) {
     const admin = new UserModel({
       email: `${role.toLowerCase()}@trustshield.io`,
@@ -34,6 +36,22 @@ const generateSeedData = async () => {
       status: 'ACTIVE',
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${role}`,
       bio: `Official system ${role}.`
+    });
+    await admin.save();
+    users.push(admin);
+  }
+
+  // 7 Security Admins to make it exactly 10
+  for (let i = 1; i <= 7; i++) {
+    const role = 'SECURITY_ADMIN';
+    const email = i === 1 ? 'security_admin@trustshield.io' : `security_admin_${i}@trustshield.io`;
+    const admin = new UserModel({
+      email: email,
+      password: 'securepassword123',
+      role: role,
+      status: 'ACTIVE',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=security_admin_${i}`,
+      bio: `Official system Security Admin ${i}.`
     });
     await admin.save();
     users.push(admin);
@@ -106,11 +124,22 @@ const generateSeedData = async () => {
     await post.save();
 
     // Push to RabbitMQ for AI validation to simulate realistic traffic
-    await rabbitMQClient.publishMessage('security.threat_analysis_queue', {
-      event_id: post._id.toString(),
-      event_type: 'new_post',
-      user_id: author._id.toString(),
-      payload_text: content,
+    await rabbitMQClient.publishThreatEvent({
+      eventId: post._id.toString(),
+      correlationId: `seed-${i}`,
+      eventType: 'NEW_POST',
+      userId: author._id.toString(),
+      email: author.email,
+      ipAddress: '127.0.0.1',
+      userAgent: 'seed-script',
+      requestId: 'seed',
+      metadata: { 
+        burstVelocity: 0,
+        targetRecipientRatio: 0,
+        uriHyperlinkDensity: 0,
+        sessionDwellDuration: 0,
+        payloadText: content 
+      },
       timestamp: new Date().toISOString()
     });
 
@@ -129,11 +158,22 @@ const generateSeedData = async () => {
       });
       await comment.save();
 
-      await rabbitMQClient.publishMessage('security.threat_analysis_queue', {
-        event_id: comment._id.toString(),
-        event_type: 'new_comment',
-        user_id: commenter._id.toString(),
-        payload_text: commentContent,
+      await rabbitMQClient.publishThreatEvent({
+        eventId: comment._id.toString(),
+        correlationId: `seed-comment-${i}-${j}`,
+        eventType: 'NEW_COMMENT',
+        userId: commenter._id.toString(),
+        email: commenter.email,
+        ipAddress: '127.0.0.1',
+        userAgent: 'seed-script',
+        requestId: 'seed',
+        metadata: { 
+          burstVelocity: 0,
+          targetRecipientRatio: 0,
+          uriHyperlinkDensity: 0,
+          sessionDwellDuration: 0,
+          payloadText: commentContent 
+        },
         timestamp: new Date().toISOString()
       });
     }

@@ -66,6 +66,8 @@ export interface ThreatAlert {
   acknowledged?: boolean;
   acknowledgedBy?: string;
   acknowledgedAt?: string;
+  locked?: boolean;
+  lockedBy?: string;
   timestamp?: string;
   createdAt?: string;
 }

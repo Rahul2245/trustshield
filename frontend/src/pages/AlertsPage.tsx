@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, ExternalLink } from "lucide-react";
+import { Check, ExternalLink, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSeverityColor } from "@/lib/utils";
-import { acknowledgeAlert, getAlerts } from "@/services/api";
+import { acknowledgeAlert, getAlerts, lockAlert } from "@/services/api";
 import type { ThreatAlert } from "@/types";
+import { useAuthStore } from "@/store/auth";
 
 export function AlertsPage() {
   const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "acknowledged">("all");
+  
+  const { user } = useAuthStore();
 
   const loadAlerts = () => {
     setLoading(true);
@@ -37,6 +40,18 @@ export function AlertsPage() {
       loadAlerts();
     } catch {
       toast.error("Failed to acknowledge alert");
+    }
+  };
+
+  const handleLock = async (alertId: string) => {
+    try {
+      await lockAlert(alertId);
+      toast.success("Alert locked for investigation");
+      // Optimistic UI update
+      setAlerts(alerts.map(a => a.alertId === alertId ? { ...a, locked: true, lockedBy: user?.id } : a));
+    } catch {
+      toast.error("Failed to lock alert or already locked");
+      loadAlerts();
     }
   };
 
@@ -83,7 +98,7 @@ export function AlertsPage() {
               className={
                 !alert.acknowledged && alert.severity === "CRITICAL"
                   ? "border-red-300 bg-red-50/30"
-                  : ""
+                  : alert.locked ? "border-yellow-300 bg-yellow-50/10" : ""
               }
             >
               <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
@@ -100,6 +115,12 @@ export function AlertsPage() {
                       <span className="flex items-center gap-1 text-xs font-medium text-red-600">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
                         Live
+                      </span>
+                    )}
+                    {alert.locked && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-yellow-600 border border-yellow-200 px-2 rounded-full">
+                        <Lock className="h-3 w-3" />
+                        Locked by {alert.lockedBy === user?.id ? "You" : `Admin ${alert.lockedBy?.slice(0, 4)}`}
                       </span>
                     )}
                   </div>
@@ -122,15 +143,35 @@ export function AlertsPage() {
                       </Link>
                     </Button>
                   )}
-                  {!alert.acknowledged && (
+                  
+                  {!alert.acknowledged && !alert.locked && (
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                       onClick={() => handleLock(alert.alertId)}
+                     >
+                       <Lock className="h-4 w-4 mr-1" />
+                       Lock
+                     </Button>
+                  )}
+
+                  {!alert.acknowledged && (alert.lockedBy === user?.id || !alert.locked) && (
                     <Button
                       variant="success"
                       size="sm"
                       onClick={() => handleAcknowledge(alert.alertId)}
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-4 w-4 mr-1" />
                       Acknowledge
                     </Button>
+                  )}
+                  
+                  {alert.locked && alert.lockedBy !== user?.id && (
+                     <Button variant="secondary" size="sm" disabled>
+                        <Lock className="h-4 w-4 mr-1" />
+                        In Progress
+                     </Button>
                   )}
                 </div>
               </CardContent>

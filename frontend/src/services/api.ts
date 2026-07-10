@@ -100,6 +100,13 @@ export async function acknowledgeAlert(alertId: string) {
   return data.data;
 }
 
+export async function lockAlert(alertId: string) {
+  const { data } = await api.post<ApiResponse<{ locked: boolean }>>(
+    `/api/v1/admin/alerts/${alertId}/lock`
+  );
+  return data.data;
+}
+
 export async function getUsers(params: {
   page?: number;
   limit?: number;

@@ -175,6 +175,54 @@ export function DashboardPage() {
         </div>
       </div>
       
+      {/* Analytics Section */}
+      <div className="grid gap-6 lg:grid-cols-2 mb-8">
+         <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
+            <h3 className="text-lg font-bold text-white mb-6">Targeted Organizations (Top 5)</h3>
+            <div className="space-y-4">
+               {[
+                  { name: "React Enthusiasts", threats: 342, percentage: 85 },
+                  { name: "Trust & Safety Professionals", threats: 156, percentage: 65 },
+                  { name: "OpenAI Developer Group", threats: 98, percentage: 40 },
+                  { name: "Cyber Security Group", threats: 64, percentage: 25 },
+                  { name: "Cloud Computing Hub", threats: 32, percentage: 10 },
+               ].map(org => (
+                  <div key={org.name}>
+                     <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-300">{org.name}</span>
+                        <span className="text-[#00FF9D] font-bold">{org.threats}</span>
+                     </div>
+                     <div className="w-full bg-[#111111] rounded-full h-2">
+                        <div className="bg-[#00FF9D] h-2 rounded-full" style={{ width: `${org.percentage}%` }}></div>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+         <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
+            <h3 className="text-lg font-bold text-white mb-6">Threat Origins (IP Location)</h3>
+            <div className="space-y-4">
+               {[
+                  { region: "North America", threats: 450, percentage: 90 },
+                  { region: "Eastern Europe", threats: 230, percentage: 60 },
+                  { region: "Asia Pacific", threats: 180, percentage: 45 },
+                  { region: "Western Europe", threats: 95, percentage: 25 },
+                  { region: "South America", threats: 40, percentage: 10 },
+               ].map(origin => (
+                  <div key={origin.region}>
+                     <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-300">{origin.region}</span>
+                        <span className="text-[#ef4444] font-bold">{origin.threats}</span>
+                     </div>
+                     <div className="w-full bg-[#111111] rounded-full h-2">
+                        <div className="bg-[#ef4444] h-2 rounded-full" style={{ width: `${origin.percentage}%` }}></div>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+      </div>
+      
       {/* Recent Alerts Section */}
       <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
          <div className="flex justify-between items-center mb-6">

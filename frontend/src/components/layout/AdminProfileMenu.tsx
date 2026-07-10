@@ -61,14 +61,14 @@ export function AdminProfileMenu() {
           <div className="flex flex-col gap-1 py-2">
             <DropdownMenu.Item
               className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 focus:bg-primary/5 focus:outline-none transition-colors"
-              onClick={() => { import('sonner').then(m => m.toast.info('Account Settings coming soon!')); }}
+              onClick={() => { setOpen(false); navigate("/settings"); }}
             >
               <User className="h-4 w-4 text-muted" />
               Account Settings
             </DropdownMenu.Item>
             <DropdownMenu.Item
               className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 focus:bg-primary/5 focus:outline-none transition-colors"
-              onClick={() => { import('sonner').then(m => m.toast.info('Notification Preferences coming soon!')); }}
+              onClick={() => { setOpen(false); navigate("/settings"); }}
             >
               <Settings className="h-4 w-4 text-muted" />
               Preferences

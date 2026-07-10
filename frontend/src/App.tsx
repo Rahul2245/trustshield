@@ -21,6 +21,8 @@ import { SearchPage } from "@/pages/SearchPage";
 import { UserLoginPage } from "@/pages/auth/UserLoginPage";
 import { UserRegisterPage } from "@/pages/auth/UserRegisterPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
+import { SettingsPage } from "@/pages/SettingsPage";
+import { AlertDetailPage } from "@/pages/AlertDetailPage";
 import { useAuthStore } from "@/store/auth";
 
 export default function App() {
@@ -49,11 +51,13 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/alerts/:alertId" element={<AlertDetailPage />} />
           <Route path="/threats" element={<ThreatsPage />} />
           <Route path="/threats/:eventId" element={<ThreatDetailPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/system" element={<SystemHealthPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route
           path="*"

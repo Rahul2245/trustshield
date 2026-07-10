@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   Cell,
   Pie,
   PieChart,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Legend,
 } from "recharts";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,23 +80,38 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-[#00FF9D]/50 transition-colors">
-           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={64} className="text-[#00FF9D]"/></div>
-           <p className="text-gray-400 text-sm font-medium mb-2">Total Events Scanned</p>
-           <h2 className="text-4xl font-bold text-white mb-4">{stats?.threats.todayThreats ?? 0}</h2>
-           <p className="text-xs text-[#00FF9D] flex items-center gap-1">+12.5% <span className="text-gray-500">vs last period</span></p>
+        <div className="bg-surface rounded-xl p-6 border border-border relative overflow-hidden group hover:border-accent-green/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] flex flex-col justify-between">
+           <div>
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={64} className="text-accent-green"/></div>
+             <p className="text-muted text-sm font-medium mb-2 uppercase tracking-wider">Total Events Scanned</p>
+             <h2 className="text-4xl font-bold text-primary mb-4">{stats?.threats.todayThreats ?? 0}</h2>
+             <p className="text-xs text-accent-green flex items-center gap-1 font-semibold">+12.5% <span className="text-muted font-normal">vs last period</span></p>
+           </div>
+           <Link to="/threats" className="mt-4 text-xs font-medium text-accent-green hover:text-accent-green/80 flex items-center gap-1 w-max">
+             View Details <span className="text-[10px]">→</span>
+           </Link>
         </div>
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-red-500/50 transition-colors">
-           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-red-500"><AlertTriangle size={64}/></div>
-           <p className="text-gray-400 text-sm font-medium mb-2">Pending Alerts</p>
-           <h2 className="text-4xl font-bold text-white mb-4">{stats?.unacknowledgedAlerts ?? 0}</h2>
-           <p className="text-xs text-red-400 flex items-center gap-1">+5.2% <span className="text-gray-500">vs last period</span></p>
+        <div className="bg-surface rounded-xl p-6 border border-border relative overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.1)] flex flex-col justify-between">
+           <div>
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-red-500"><AlertTriangle size={64}/></div>
+             <p className="text-muted text-sm font-medium mb-2 uppercase tracking-wider">Pending Alerts</p>
+             <h2 className="text-4xl font-bold text-primary mb-4">{stats?.unacknowledgedAlerts ?? 0}</h2>
+             <p className="text-xs text-red-500 flex items-center gap-1 font-semibold">+5.2% <span className="text-muted font-normal">vs last period</span></p>
+           </div>
+           <Link to="/alerts" className="mt-4 text-xs font-medium text-red-500 hover:text-red-400 flex items-center gap-1 w-max">
+             View Details <span className="text-[10px]">→</span>
+           </Link>
         </div>
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] relative overflow-hidden group hover:border-blue-500/50 transition-colors">
-           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-[#00FF9D]"><Activity size={64}/></div>
-           <p className="text-gray-400 text-sm font-medium mb-2">AI Confidence Score</p>
-           <h2 className="text-4xl font-bold text-white mb-4">98.5%</h2>
-           <p className="text-xs text-[#00FF9D] flex items-center gap-1">+0.8% <span className="text-gray-500">accuracy rating</span></p>
+        <div className="bg-surface rounded-xl p-6 border border-border relative overflow-hidden group hover:border-accent-blue/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] flex flex-col justify-between">
+           <div>
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-accent-blue"><Activity size={64}/></div>
+             <p className="text-muted text-sm font-medium mb-2 uppercase tracking-wider">AI Confidence Score</p>
+             <h2 className="text-4xl font-bold text-primary mb-4">98.5%</h2>
+             <p className="text-xs text-accent-green flex items-center gap-1 font-semibold">+0.8% <span className="text-muted font-normal">accuracy rating</span></p>
+           </div>
+           <Link to="/analytics" className="mt-4 text-xs font-medium text-accent-blue hover:text-accent-blue/80 flex items-center gap-1 w-max">
+             View Details <span className="text-[10px]">→</span>
+           </Link>
         </div>
       </div>
 
@@ -128,47 +144,53 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]">
+        <div className="lg:col-span-2 bg-surface rounded-xl p-6 border border-border shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.03)] transition-all">
            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-white">Threat Volume Map</h3>
+              <h3 className="text-lg font-bold text-primary">Threat Velocity Trend</h3>
               <div className="flex gap-2 text-xs font-medium">
-                 <span className="px-2 py-1 rounded bg-[#00FF9D]/10 text-[#00FF9D]">1H</span>
-                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">4H</span>
-                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">1D</span>
-                 <span className="px-2 py-1 rounded text-gray-500 hover:text-white cursor-pointer">1W</span>
+                 <span className="px-2 py-1 rounded bg-red-500/10 text-red-500 border border-red-500/20">1H</span>
+                 <span className="px-2 py-1 rounded text-muted hover:text-primary cursor-pointer hover:bg-primary/5 transition-colors">4H</span>
+                 <span className="px-2 py-1 rounded text-muted hover:text-primary cursor-pointer hover:bg-primary/5 transition-colors">1D</span>
+                 <span className="px-2 py-1 rounded text-muted hover:text-primary cursor-pointer hover:bg-primary/5 transition-colors">1W</span>
               </div>
            </div>
            <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trend}>
-                <XAxis dataKey="_id" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.slice(5)} />
-                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{fill: '#2a2a2a'}} contentStyle={{backgroundColor: '#1E1E1E', borderColor: '#2a2a2a', borderRadius: '8px', color: '#fff'}} itemStyle={{ color: '#00FF9D' }} />
-                <Bar dataKey="count" fill="#00FF9D" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              <AreaChart data={trend}>
+                <defs>
+                  <linearGradient id="colorRed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="_id" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} axisLine={false} tickLine={false} tickFormatter={(v) => v.slice(5)} />
+                <YAxis tick={{ fontSize: 12, fill: 'var(--color-muted)' }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{stroke: 'var(--color-border)', strokeWidth: 1, strokeDasharray: '4 4'}} contentStyle={{backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-primary)'}} itemStyle={{ color: '#ef4444' }} />
+                <Area type="monotone" dataKey="count" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorRed)" />
+              </AreaChart>
             </ResponsiveContainer>
            </div>
         </div>
 
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a] flex flex-col">
-           <h3 className="text-lg font-bold text-white mb-6">Action Breakdown</h3>
+        <div className="bg-surface rounded-xl p-6 border border-border flex flex-col shadow-sm">
+           <h3 className="text-lg font-bold text-primary mb-6">Action Breakdown</h3>
            <div className="flex-1 min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={actionData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={4}>
                   {actionData.map((entry) => (
-                    <Cell key={entry.name} fill={ACTION_COLORS[entry.name] ?? "#94a3b8"} />
+                    <Cell key={entry.name} fill={ACTION_COLORS[entry.name] ?? "var(--color-muted)"} stroke="var(--color-surface)" strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{backgroundColor: '#1E1E1E', borderColor: '#2a2a2a', borderRadius: '8px', color: '#fff'}} />
+                <Tooltip contentStyle={{backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-primary)'}} />
               </PieChart>
             </ResponsiveContainer>
            </div>
            <div className="mt-4 flex flex-wrap justify-center gap-2">
               {actionData.map((item) => (
-                <div key={item.name} className="px-3 py-1 bg-[#111111] rounded-full border border-[#2a2a2a] text-xs font-medium text-gray-300 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: ACTION_COLORS[item.name] || '#94a3b8'}} />
-                  {item.name}: {item.value}
+                <div key={item.name} className="px-3 py-1.5 bg-primary/5 rounded-full border border-border text-xs font-medium text-primary flex items-center gap-2 shadow-sm transition-colors hover:bg-primary/10">
+                  <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{backgroundColor: ACTION_COLORS[item.name] || 'var(--color-muted)'}} />
+                  {item.name}: <span className="font-bold">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -234,7 +256,7 @@ export function DashboardPage() {
                 <p className="text-sm text-gray-500 col-span-3 py-8 text-center">No recent alerts</p>
               ) : (
                 recentAlerts.map((alert) => (
-                  <div key={alert.alertId} className="bg-[#111111] rounded-lg p-5 border border-[#2a2a2a] hover:border-[#00FF9D]/50 transition-colors">
+                  <Link to={`/alerts/${alert.alertId}`} key={alert.alertId} className="bg-primary/5 rounded-lg p-5 border border-border hover:border-accent-green/50 transition-colors block">
                     <div className="flex items-center justify-between mb-3">
                       <span className={`px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-sm ${
                           alert.severity === "CRITICAL" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
@@ -245,11 +267,11 @@ export function DashboardPage() {
                         <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
                       )}
                     </div>
-                    <p className="font-medium text-gray-200 text-sm leading-relaxed">{alert.message}</p>
-                    <p className="mt-3 text-[10px] text-gray-500 font-mono">
+                    <p className="font-medium text-primary text-sm leading-relaxed">{alert.message}</p>
+                    <p className="mt-3 text-[10px] text-muted font-mono">
                       TRACE ID: {alert.correlationId.slice(0, 12)}
                     </p>
-                  </div>
+                  </Link>
                 ))
             )}
          </div>

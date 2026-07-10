@@ -163,8 +163,8 @@ export function AlertsPage() {
                 <div className="flex gap-2">
                   {alert.eventId && (
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/threats/${alert.eventId}`}>
-                        <ExternalLink className="h-4 w-4" />
+                      <Link to={`/alerts/${alert.alertId}`}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
                         Details
                       </Link>
                     </Button>

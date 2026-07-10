@@ -68,34 +68,34 @@ export function UsersPage() {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-[28px] border border-border">
+        <div className="overflow-x-auto rounded-[28px] border border-border bg-surface shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-primary/5 sticky top-0 z-10 backdrop-blur-sm">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted">Email</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Role</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Last Login</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Actions</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Email</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Role</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Status</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Last Login</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-t border-border">
-                  <td className="px-4 py-3 font-medium">{user.email}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant="secondary">{user.role}</Badge>
+                <tr key={user.id} className="border-t border-border hover:bg-primary/10 even:bg-primary/5 transition-colors duration-150">
+                  <td className="px-6 py-4 font-medium text-primary">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">{user.role}</Badge>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4">
                     <Badge className={statusColors[user.status]}>{user.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-muted">
+                  <td className="px-6 py-4 text-muted">
                     {user.lastLoginAt
                       ? new Date(user.lastLoginAt).toLocaleString()
                       : "Never"}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2 items-center">
                       {(["ACTIVE", "INACTIVE", "SUSPENDED"] as const).map(
                         (status) =>
                           user.status !== status && (
@@ -103,6 +103,7 @@ export function UsersPage() {
                               key={status}
                               variant="outline"
                               size="sm"
+                              className="text-xs"
                               onClick={() => handleStatusChange(user.id, status)}
                             >
                               {status}

@@ -48,7 +48,7 @@ export function ThreatsPage() {
           />
         </div>
         <select
-          className="h-11 rounded-2xl border border-border bg-white px-4 text-sm"
+          className="h-11 rounded-2xl border border-border bg-surface px-4 text-sm text-primary outline-none focus:ring-2 focus:ring-accent-green/50 hover:bg-primary/5 transition-colors cursor-pointer"
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
         >
@@ -67,61 +67,66 @@ export function ThreatsPage() {
           ))}
         </div>
       ) : threats.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted">
-            No threat logs found. Events appear after login attempts are
-            processed by the AI worker.
+        <Card className="border-dashed border-border bg-transparent">
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="rounded-full bg-primary/5 p-4 mb-4">
+              <Search className="h-8 w-8 text-muted opacity-50" />
+            </div>
+            <h3 className="text-lg font-medium text-primary mb-1">No Threat Logs Found</h3>
+            <p className="text-sm text-muted max-w-sm">
+              Events will appear here after login attempts are processed by the AI computational engine.
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-hidden rounded-[28px] border border-border">
+        <div className="overflow-x-auto rounded-[28px] border border-border bg-surface shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-primary/5 sticky top-0 z-10 backdrop-blur-sm">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted">Event</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">User / IP</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">NLP</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">IF Score</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Fusion</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Action</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Time</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Event</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">User / IP</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">NLP</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">IF Score</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Fusion</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Action</th>
+                <th className="px-6 py-4 text-left font-semibold text-primary">Time</th>
               </tr>
             </thead>
             <tbody>
               {threats.map((threat) => (
                 <tr
                   key={threat.threat_matrix.event_id}
-                  className="border-t border-border hover:bg-gray-50"
+                  className="border-t border-border hover:bg-primary/10 even:bg-primary/5 transition-colors duration-150"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4">
                     <Link
                       to={`/threats/${threat.threat_matrix.event_id}`}
-                      className="font-mono text-xs text-accent-blue hover:underline"
+                      className="font-mono text-xs text-accent-blue hover:underline hover:text-accent-blue/80 transition-colors"
                     >
                       {threat.threat_matrix.event_id.slice(0, 12)}...
                     </Link>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4 text-primary">
                     <div className="text-xs">
-                      <p>{threat.threat_matrix.user_id.slice(0, 12)}...</p>
-                      <p className="text-muted">{threat.input.origin_ip}</p>
+                      <p className="font-medium">{threat.threat_matrix.user_id.slice(0, 12)}...</p>
+                      <p className="text-muted mt-0.5">{threat.input.origin_ip}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4 text-primary font-medium">
                     {formatRiskScore(threat.threat_matrix.tier1_nlp_score)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4 text-primary font-medium">
                     {formatRiskScore(threat.threat_matrix.tier2_if_score)}
                   </td>
-                  <td className="px-4 py-3 font-semibold">
+                  <td className="px-6 py-4 font-bold text-primary">
                     {formatRiskScore(threat.threat_matrix.final_fusion_score)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-6 py-4">
                     <Badge className={getActionColor(threat.threat_matrix.action_taken)}>
                       {threat.threat_matrix.action_taken}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted">
+                  <td className="px-6 py-4 text-xs text-muted">
                     {new Date(threat.created_at).toLocaleString()}
                   </td>
                 </tr>

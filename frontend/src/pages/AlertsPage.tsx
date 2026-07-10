@@ -105,10 +105,15 @@ export function AlertsPage() {
           ))}
         </div>
       ) : alerts.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted">
-            No alerts found. Alerts appear when rate limits trigger or AI
-            evaluation completes.
+        <Card className="border-dashed border-border bg-transparent">
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="rounded-full bg-primary/5 p-4 mb-4">
+              <Shield className="h-8 w-8 text-muted opacity-50" />
+            </div>
+            <h3 className="text-lg font-medium text-primary mb-1">No Active Alerts</h3>
+            <p className="text-sm text-muted max-w-sm">
+              All systems nominal. Alerts will appear here when rate limits trigger or AI evaluation completes.
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -118,8 +123,8 @@ export function AlertsPage() {
               key={alert.alertId}
               className={
                 !alert.acknowledged && alert.severity === "CRITICAL"
-                  ? "border-red-300 bg-red-50/30"
-                  : alert.locked ? "border-yellow-300 bg-yellow-50/10" : ""
+                  ? "border-red-900/50 bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.05)]"
+                  : alert.locked ? "border-yellow-900/50 bg-yellow-950/10" : ""
               }
             >
               <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
@@ -169,7 +174,7 @@ export function AlertsPage() {
                      <Button
                        variant="outline"
                        size="sm"
-                       className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                       className="border-yellow-700/50 text-yellow-500 hover:bg-yellow-900/20"
                        onClick={() => handleLock(alert.alertId)}
                      >
                        <Lock className="h-4 w-4 mr-1" />

@@ -13,8 +13,15 @@
   --color-border: #e5e7eb;
   --radius-card: 1.75rem;
 }
-
 @layer base {
+  .admin-theme {
+    --color-background: var(--color-slate-950);
+    --color-surface: var(--color-slate-900);
+    --color-primary: var(--color-slate-50);
+    --color-muted: var(--color-slate-400);
+    --color-border: var(--color-slate-800);
+  }
+
   * {
     @apply border-border;
   }

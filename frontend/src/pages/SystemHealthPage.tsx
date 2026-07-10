@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getGatewayHealth, getAiWorkerHealth } from "@/services/api";
+import { cn } from "@/lib/utils";
 
 interface ServiceStatus {
   name: string;
@@ -102,7 +103,7 @@ export function SystemHealthPage() {
                     .map(([key, value]) => (
                       <div
                         key={key}
-                        className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2"
+                        className="flex items-center justify-between rounded-xl bg-primary/5 px-3 py-2"
                       >
                         <span className="capitalize text-muted">
                           {key.replace(/([A-Z])/g, " $1")}
@@ -127,21 +128,41 @@ export function SystemHealthPage() {
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {[
-              { name: "Redis Cache", desc: "Atomic rate limiting windows" },
-              { name: "MongoDB", desc: "Core state & threat logs" },
-              { name: "RabbitMQ", desc: "Async threat.eval queue" },
-              { name: "Socket.io", desc: "Real-time admin alerts" },
-              { name: "Scikit-Learn", desc: "TF-IDF + Naive Bayes" },
-              { name: "Ollama Llama 3", desc: "Shadow queue evaluation" },
-            ].map((component) => (
-              <div
-                key={component.name}
-                className="rounded-2xl border border-border p-4"
-              >
-                <p className="font-medium">{component.name}</p>
-                <p className="mt-1 text-xs text-muted">{component.desc}</p>
-              </div>
-            ))}
+              { name: "Redis Cache", desc: "Atomic rate limiting windows", group: "gateway" },
+              { name: "MongoDB", desc: "Core state & threat logs", group: "gateway" },
+              { name: "RabbitMQ", desc: "Async threat.eval queue", group: "gateway" },
+              { name: "Socket.io", desc: "Real-time admin alerts", group: "gateway" },
+              { name: "Scikit-Learn", desc: "TF-IDF + Naive Bayes", group: "worker" },
+              { name: "Ollama Llama 3", desc: "Shadow queue evaluation", group: "worker" },
+            ].map((component) => {
+              const serviceStatus = component.group === "worker"
+                ? services.find(s => s.name === "FastAPI AI Worker")?.status
+                : services.find(s => s.name === "Node.js Edge Gateway")?.status;
+                
+              const isHealthy = serviceStatus === "healthy";
+              const isLoading = serviceStatus === "loading";
+
+              return (
+                <div
+                  key={component.name}
+                  className={cn(
+                    "rounded-2xl border p-4 transition-all duration-300 relative overflow-hidden group",
+                    isLoading ? "border-border bg-surface" :
+                    isHealthy 
+                      ? "border-accent-green/30 bg-accent-green/5 shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
+                      : "border-red-500/30 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)] hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                  )}
+                >
+                  <p className="font-medium text-primary flex items-center justify-between">
+                    {component.name}
+                    {!isLoading && (
+                      <span className={cn("h-2 w-2 rounded-full", isHealthy ? "bg-accent-green animate-pulse" : "bg-red-500")} />
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">{component.desc}</p>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

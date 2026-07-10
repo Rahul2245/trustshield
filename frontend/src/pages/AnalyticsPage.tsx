@@ -55,7 +55,7 @@ export function AnalyticsPage() {
           </p>
         </div>
         <select
-          className="h-10 rounded-full border border-border bg-white px-4 text-sm"
+          className="h-10 rounded-full border border-border bg-surface px-4 text-sm text-primary outline-none focus:ring-2 focus:ring-accent-green/50 hover:bg-primary/5 transition-colors cursor-pointer"
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
@@ -78,10 +78,13 @@ export function AnalyticsPage() {
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="_id" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.4} />
+              <XAxis dataKey="_id" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} tickFormatter={(v) => v.slice(5)} stroke="var(--color-border)" />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="var(--color-border)" />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '12px', color: 'var(--color-primary)' }}
+                itemStyle={{ color: 'var(--color-primary)' }}
+              />
               <Area
                 type="monotone"
                 dataKey="count"
@@ -102,10 +105,13 @@ export function AnalyticsPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="_id" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.4} />
+                <XAxis dataKey="_id" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} tickFormatter={(v) => v.slice(5)} stroke="var(--color-border)" />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="var(--color-border)" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '12px', color: 'var(--color-primary)' }}
+                  itemStyle={{ color: 'var(--color-primary)' }}
+                />
                 <Line
                   type="monotone"
                   dataKey="avgRisk"
@@ -125,10 +131,13 @@ export function AnalyticsPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="_id" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.4} />
+                <XAxis dataKey="_id" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} tickFormatter={(v) => v.slice(5)} stroke="var(--color-border)" />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="var(--color-border)" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '12px', color: 'var(--color-primary)' }}
+                  itemStyle={{ color: 'var(--color-primary)' }}
+                />
                 <Line
                   type="monotone"
                   dataKey="blocked"
@@ -159,7 +168,7 @@ export function AnalyticsPage() {
                       {item.count} ({pct}%)
                     </span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-gray-100">
+                  <div className="h-3 overflow-hidden rounded-full bg-primary/10">
                     <div
                       className="h-full rounded-full bg-accent-blue transition-all"
                       style={{ width: `${pct}%` }}

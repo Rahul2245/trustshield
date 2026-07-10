@@ -5,15 +5,13 @@ import {
   BarChart3,
   Bell,
   LayoutDashboard,
-  LogOut,
-  Settings,
   Shield,
   Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth";
+import { AdminProfileMenu } from "./AdminProfileMenu";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,36 +27,30 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/admin/login");
-  };
-
   return (
-    <div className="min-h-screen bg-[#111111] p-4 md:p-6 text-white font-sans">
-      <div className="mx-auto max-w-[1600px] rounded-[16px] bg-[#1a1a1a] p-4 shadow-2xl md:p-6 border border-[#2a2a2a]">
-        <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-[#2a2a2a] pb-6">
+    <div className="admin-theme min-h-screen bg-background p-4 md:p-6 text-primary font-sans transition-colors duration-300">
+      <div className="mx-auto max-w-[1600px] rounded-[16px] bg-surface p-4 shadow-2xl md:p-6 border border-border transition-colors duration-300">
+        <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#00FF9D]/10">
-              <Shield className="h-5 w-5 text-[#00FF9D]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-green/10">
+              <Shield className="h-5 w-5 text-accent-green" />
             </div>
-            <span className="text-xl font-bold tracking-widest text-white">TRUSTSHIELD <span className="text-xs text-[#00FF9D] ml-2">ADMIN</span></span>
+            <span className="text-xl font-bold tracking-widest text-primary">
+              TRUSTSHIELD <span className="text-xs text-accent-green ml-2">ADMIN</span>
+            </span>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-1 rounded-lg bg-[#111111] p-1 border border-[#2a2a2a]">
+          <nav className="flex flex-wrap items-center gap-1 rounded-lg bg-background p-1 border border-border">
             {navItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-[#00FF9D]/10 text-[#00FF9D]"
-                      : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                      ? "bg-accent-green/10 text-accent-green shadow-sm"
+                      : "text-muted hover:text-primary hover:bg-primary/5"
                   )
                 }
               >
@@ -69,26 +61,16 @@ export function AppLayout({ children }: AppLayoutProps) {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button onClick={() => { import('sonner').then(m => m.toast.info('Notifications feature coming soon!')); }} variant="ghost" size="icon" className="relative text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
+            <Button onClick={() => { import('sonner').then(m => m.toast.info('Notifications feature coming soon!')); }} variant="ghost" size="icon" className="relative text-muted hover:text-primary">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#00FF9D] animate-pulse" />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-accent-green animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
             </Button>
-            <Button onClick={() => { import('sonner').then(m => m.toast.info('Settings feature coming soon!')); }} variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#2a2a2a]">
-              <Settings className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3 bg-[#111111] border border-[#2a2a2a] rounded-full pl-1 pr-4 py-1">
-               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00FF9D]/20 text-sm font-bold text-[#00FF9D]">
-                 {user?.email?.charAt(0).toUpperCase()}
-               </div>
-               <span className="text-sm font-medium text-gray-300">{user?.email || 'admin@trustshield.io'}</span>
-            </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            
+            <AdminProfileMenu />
           </div>
         </header>
 
-        <main>{children}</main>
+        <main className="animate-in fade-in duration-500">{children}</main>
       </div>
     </div>
   );

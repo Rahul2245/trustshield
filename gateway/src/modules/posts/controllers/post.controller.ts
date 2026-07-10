@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { PostModel } from '../models/post.model';
 import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
 import { logger } from '../../../infrastructure/logger/logger';
+import { AdminService } from '../../admin/services/admin.service';
+
+const adminService = new AdminService();
 
 export class PostController {
   
@@ -18,28 +22,83 @@ export class PostController {
       
       await post.save();
 
-      // Push to RabbitMQ for AI validation
-      const payload = {
+      const correlationId = uuidv4();
+      const userId = post.author.toString();
+      const content = post.content;
+
+      // Push to RabbitMQ for AI validation (async, non-blocking)
+      const mqPayload = {
         eventId: post._id.toString(),
         eventType: 'NEW_POST',
-        userId: post.author.toString(),
-        email: "unknown@example.com", // Fetch if possible or leave dummy
+        userId,
+        email: req.user?.email || 'community@user.org',
         ipAddress: req.ip || '127.0.0.1',
         userAgent: req.headers['user-agent'] || 'unknown',
-        correlationId: require('crypto').randomUUID(),
-        requestId: require('crypto').randomUUID(),
+        correlationId,
+        requestId: uuidv4(),
         metadata: {
           burstVelocity: 0,
           targetRecipientRatio: 0,
           uriHyperlinkDensity: 0,
           sessionDwellDuration: 0,
-          payloadText: post.content
+          payloadText: content
         },
         timestamp: new Date().toISOString()
       };
 
-      await rabbitMQClient.publishThreatEvent(payload);
-      logger.info(`Post ${post._id} sent to AI validation queue`);
+      rabbitMQClient.publishThreatEvent(mqPayload).catch(err =>
+        logger.error(err, `Failed to publish post ${post._id} to RabbitMQ`)
+      );
+
+      // === DIRECT ALERT SIMULATION ===
+      // Since the AI Worker may not be running, we perform a local heuristic
+      // analysis and directly create alerts. This mirrors what the AI worker
+      // webhook would do once the AI Worker is online.
+      setImmediate(async () => {
+        try {
+          const spamPatterns = /free crypto|airdrop|click here|claim now|urgent|phishing|hack|malicious/i;
+          const hatePatterns = /hate|disgusting|kick out|kill|racist/i;
+
+          let riskScore = 10;
+          let action: 'ALLOW' | 'MONITOR' | 'SHADOW' | 'BLOCK' = 'ALLOW';
+
+          if (spamPatterns.test(content)) {
+            riskScore = 92;
+            action = 'BLOCK';
+          } else if (hatePatterns.test(content)) {
+            riskScore = 78;
+            action = 'SHADOW';
+          } else if (content.includes('http://') || content.includes('https://')) {
+            riskScore = 45;
+            action = 'MONITOR';
+          }
+
+          // Update post status based on analysis
+          const status = action === 'ALLOW' ? 'APPROVED' : action === 'BLOCK' ? 'REJECTED' : 'PENDING';
+          await PostModel.findByIdAndUpdate(post._id, {
+            status,
+            isFlagged: action !== 'ALLOW',
+            threatScore: riskScore,
+            aiVerdict: action === 'BLOCK' || action === 'SHADOW',
+          });
+
+          // Only create an alert if content is suspicious
+          if (action !== 'ALLOW') {
+            await adminService.processAiWebhook({
+              event_id: post._id.toString(),
+              event_type: 'new_post',
+              correlation_id: correlationId,
+              user_id: userId,
+              risk_score: riskScore,
+              action,
+              timestamp: new Date().toISOString(),
+            });
+            logger.info(`Alert created for post ${post._id} with action ${action}`);
+          }
+        } catch (err) {
+          logger.error(err as Error, `Failed to create alert for post ${post._id}`);
+        }
+      });
 
       res.status(202).json({
         success: true,

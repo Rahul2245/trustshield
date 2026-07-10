@@ -10,7 +10,16 @@ export const adminMiddleware = (
 ): void => {
     const role = req.user?.role;
 
-    if (!role || (role !== UserRole.ADMIN && role !== UserRole.ANALYST)) {
+    const adminRoles: string[] = [
+        UserRole.ADMIN,
+        UserRole.ANALYST,
+        UserRole.SUPER_ADMIN,
+        UserRole.SECURITY_ADMIN,
+        UserRole.MODERATOR,
+        UserRole.ORG_MANAGER,
+    ];
+
+    if (!role || !adminRoles.includes(role)) {
         next(new AppError("Admin access required.", 403, "FORBIDDEN"));
         return;
     }

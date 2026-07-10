@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, ExternalLink, Lock, Unlock } from "lucide-react";
+import { Check, ExternalLink, Lock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSeverityColor } from "@/lib/utils";
 import { acknowledgeAlert, getAlerts, lockAlert } from "@/services/api";
+import { onThreatAlert } from "@/services/socket";
 import type { ThreatAlert } from "@/types";
 import { useAuthStore } from "@/store/auth";
 
@@ -26,11 +27,25 @@ export function AlertsPage() {
 
     getAlerts({ page: 1, limit: 50, acknowledged })
       .then((data) => setAlerts(data.items))
+      .catch(() => toast.error("Failed to load alerts"))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadAlerts();
+  }, [filter]);
+
+  // 🔴 REAL-TIME: Listen for new alerts via Socket.IO and refresh the list
+  useEffect(() => {
+    const unsubscribe = onThreatAlert(() => {
+      // Re-fetch alerts from server when a new alert arrives via Socket.IO
+      const acknowledged =
+        filter === "pending" ? false : filter === "acknowledged" ? true : undefined;
+      getAlerts({ page: 1, limit: 50, acknowledged })
+        .then((data) => setAlerts(data.items))
+        .catch(() => {});
+    });
+    return () => unsubscribe();
   }, [filter]);
 
   const handleAcknowledge = async (alertId: string) => {
@@ -57,11 +72,17 @@ export function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-primary">Live Security Alerts</h1>
-        <p className="mt-1 text-muted">
-          Hot threat streaming events from the Socket.io pipeline
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-primary">Live Security Alerts</h1>
+          <p className="mt-1 text-muted">
+            Hot threat streaming events from the Socket.io pipeline
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={loadAlerts} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
       <div className="flex gap-2">

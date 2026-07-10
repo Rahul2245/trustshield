@@ -5,6 +5,8 @@ export interface IComment extends Document {
   author: mongoose.Types.ObjectId;
   post: mongoose.Types.ObjectId;
   parentComment?: mongoose.Types.ObjectId;
+  depth: number;
+  likes: mongoose.Types.ObjectId[];
   threatScore: number;
   isFlagged: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -17,7 +19,9 @@ const CommentSchema: Schema = new Schema({
   content: { type: String, required: true, maxlength: 2000 },
   author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   post: { type: Schema.Types.ObjectId, ref: 'Post', required: true },
-  parentComment: { type: Schema.Types.ObjectId, ref: 'Comment' },
+  parentComment: { type: Schema.Types.ObjectId, ref: 'Comment', default: null },
+  depth: { type: Number, default: 0, max: 5 },
+  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   threatScore: { type: Number, default: 0 },
   isFlagged: { type: Boolean, default: false },
   status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' },
@@ -27,6 +31,8 @@ const CommentSchema: Schema = new Schema({
 });
 
 CommentSchema.index({ post: 1, createdAt: 1 });
+CommentSchema.index({ post: 1, parentComment: 1 });
 CommentSchema.index({ status: 1 });
 
 export const CommentModel = mongoose.model<IComment>('Comment', CommentSchema);
+

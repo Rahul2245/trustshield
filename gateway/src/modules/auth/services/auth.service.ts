@@ -21,16 +21,26 @@ export class AuthService {
             throw new Error("User already exists");
         }
 
+        const avatarId = uuidv4();
+        const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarId}`;
+
         const newUser = await this.authRepository.create({
             email: userData.email,
             password: userData.password,
             role: userData.role ?? UserRole.USER,
         });
 
+        // The auth repo create method doesn't accept avatar right now unless we modify the interface,
+        // let's do it directly on the model or assume it gets added.
+        // Actually, let's just update the user model directly here if the repo doesn't support it.
+        const { UserModel } = require("../../users/models/user.model");
+        await UserModel.findByIdAndUpdate(newUser._id, { avatar: avatarUrl });
+
         return {
             id: newUser._id,
             email: newUser.email,
             role: newUser.role,
+            avatar: avatarUrl
         };
     }
 

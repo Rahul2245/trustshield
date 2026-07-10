@@ -16,6 +16,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { CommunityPage } from "@/pages/CommunityPage";
 import { PostDetailPage } from "@/pages/PostDetailPage";
 import { OrganizationsPage } from "@/pages/OrganizationsPage";
+import { OrgDetailPage } from "@/pages/OrgDetailPage";
 import { SearchPage } from "@/pages/SearchPage";
 import { UserLoginPage } from "@/pages/auth/UserLoginPage";
 import { UserRegisterPage } from "@/pages/auth/UserRegisterPage";
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/community/post/:postId" element={<PostDetailPage />} />
         <Route path="/organizations" element={<OrganizationsPage />} />
+        <Route path="/org/:orgId" element={<OrgDetailPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/login" element={<UserLoginPage />} />

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import mongoose from 'mongoose';
 import { PostModel } from '../models/post.model';
 import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
 import { logger } from '../../../infrastructure/logger/logger';
@@ -8,25 +9,28 @@ import { AdminService } from '../../admin/services/admin.service';
 const adminService = new AdminService();
 
 export class PostController {
-  
-  public async createPost(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+  // ─────────────────────────────────────────────────────────────
+  // CREATE POST — CRITICAL: must stay PENDING + publish to MQ
+  // ─────────────────────────────────────────────────────────────
+  public createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Create pending post
       const post = new PostModel({
         content: req.body.content,
-        author: req.user?._id || req.body.authorId, // Fallback if auth middleware isn't fully active in this mockup
+        author: req.user?.id || req.body.authorId,
+        organization: req.body.organizationId || null,
         tags: req.body.tags || [],
         media: req.body.media || [],
-        status: 'PENDING'
+        status: 'PENDING'  // CRITICAL: always PENDING
       });
-      
+
       await post.save();
 
       const correlationId = uuidv4();
       const userId = post.author.toString();
       const content = post.content;
 
-      // Push to RabbitMQ for AI validation (async, non-blocking)
+      // ── PUBLISH TO RABBITMQ (do NOT remove) ──────────────────
       const mqPayload = {
         eventId: post._id.toString(),
         eventType: 'NEW_POST',
@@ -39,21 +43,18 @@ export class PostController {
         metadata: {
           burstVelocity: 0,
           targetRecipientRatio: 0,
-          uriHyperlinkDensity: 0,
+          uriHyperlinkDensity: (content.match(/https?:\/\//g) || []).length,
           sessionDwellDuration: 0,
           payloadText: content
         },
         timestamp: new Date().toISOString()
       };
-
       rabbitMQClient.publishThreatEvent(mqPayload).catch(err =>
         logger.error(err, `Failed to publish post ${post._id} to RabbitMQ`)
       );
+      // ─────────────────────────────────────────────────────────
 
-      // === DIRECT ALERT SIMULATION ===
-      // Since the AI Worker may not be running, we perform a local heuristic
-      // analysis and directly create alerts. This mirrors what the AI worker
-      // webhook would do once the AI Worker is online.
+      // Local heuristic fallback (mirrors AI Worker when offline)
       setImmediate(async () => {
         try {
           const spamPatterns = /free crypto|airdrop|click here|claim now|urgent|phishing|hack|malicious/i;
@@ -62,18 +63,10 @@ export class PostController {
           let riskScore = 10;
           let action: 'ALLOW' | 'MONITOR' | 'SHADOW' | 'BLOCK' = 'ALLOW';
 
-          if (spamPatterns.test(content)) {
-            riskScore = 92;
-            action = 'BLOCK';
-          } else if (hatePatterns.test(content)) {
-            riskScore = 78;
-            action = 'SHADOW';
-          } else if (content.includes('http://') || content.includes('https://')) {
-            riskScore = 45;
-            action = 'MONITOR';
-          }
+          if (spamPatterns.test(content)) { riskScore = 92; action = 'BLOCK'; }
+          else if (hatePatterns.test(content)) { riskScore = 78; action = 'SHADOW'; }
+          else if (/https?:\/\//.test(content)) { riskScore = 35; action = 'MONITOR'; }
 
-          // Update post status based on analysis
           const status = action === 'ALLOW' ? 'APPROVED' : action === 'BLOCK' ? 'REJECTED' : 'PENDING';
           await PostModel.findByIdAndUpdate(post._id, {
             status,
@@ -82,7 +75,6 @@ export class PostController {
             aiVerdict: action === 'BLOCK' || action === 'SHADOW',
           });
 
-          // Only create an alert if content is suspicious
           if (action !== 'ALLOW') {
             await adminService.processAiWebhook({
               event_id: post._id.toString(),
@@ -93,10 +85,9 @@ export class PostController {
               action,
               timestamp: new Date().toISOString(),
             });
-            logger.info(`Alert created for post ${post._id} with action ${action}`);
           }
         } catch (err) {
-          logger.error(err as Error, `Failed to create alert for post ${post._id}`);
+          logger.error(err as Error, `Heuristic analysis failed for post ${post._id}`);
         }
       });
 
@@ -108,23 +99,167 @@ export class PostController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  public async getPosts(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // ─────────────────────────────────────────────────────────────
+  // GET POSTS — paginated feed of APPROVED posts
+  // ─────────────────────────────────────────────────────────────
+  public getPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const posts = await PostModel.find({ status: 'APPROVED' })
-        .populate('author', 'email avatar')
-        .sort({ createdAt: -1 })
-        .limit(50);
-        
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+      const skip = (page - 1) * limit;
+
+      const query: Record<string, unknown> = { status: 'APPROVED' };
+      if (req.query.orgId) query.organization = req.query.orgId;
+
+      const [posts, total] = await Promise.all([
+        PostModel.find(query)
+          .populate('author', 'email avatar bio')
+          .populate('organization', 'name slug avatarImage')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        PostModel.countDocuments(query)
+      ]);
+
       res.status(200).json({
         success: true,
-        data: posts
+        data: {
+          items: posts,
+          total,
+          page,
+          limit,
+          hasMore: skip + posts.length < total
+        }
       });
     } catch (error) {
       next(error);
     }
-  }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // GET SINGLE POST
+  // ─────────────────────────────────────────────────────────────
+  public getPostById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const post = await PostModel.findById(req.params.id)
+        .populate('author', 'email avatar bio')
+        .populate('organization', 'name slug avatarImage');
+
+      if (!post) {
+        res.status(404).json({ success: false, message: 'Post not found' });
+        return;
+      }
+      res.status(200).json({ success: true, data: post });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // UPVOTE
+  // ─────────────────────────────────────────────────────────────
+  public upvotePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.body.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+        res.status(404).json({ success: false, message: 'Post not found' });
+        return;
+      }
+
+      const userObjId = new mongoose.Types.ObjectId(userId);
+      const alreadyUpvoted = post.upvotes.some(id => id.equals(userObjId));
+
+      if (alreadyUpvoted) {
+        // Toggle off
+        post.upvotes = post.upvotes.filter(id => !id.equals(userObjId));
+      } else {
+        post.upvotes.push(userObjId);
+        // Remove from downvotes if present
+        post.downvotes = post.downvotes.filter(id => !id.equals(userObjId));
+      }
+
+      await post.save();
+      res.status(200).json({
+        success: true,
+        data: { upvotes: post.upvotes.length, downvotes: post.downvotes.length, voted: !alreadyUpvoted ? 'up' : null }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // DOWNVOTE
+  // ─────────────────────────────────────────────────────────────
+  public downvotePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.body.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+        res.status(404).json({ success: false, message: 'Post not found' });
+        return;
+      }
+
+      const userObjId = new mongoose.Types.ObjectId(userId);
+      const alreadyDownvoted = post.downvotes.some(id => id.equals(userObjId));
+
+      if (alreadyDownvoted) {
+        post.downvotes = post.downvotes.filter(id => !id.equals(userObjId));
+      } else {
+        post.downvotes.push(userObjId);
+        post.upvotes = post.upvotes.filter(id => !id.equals(userObjId));
+      }
+
+      await post.save();
+      res.status(200).json({
+        success: true,
+        data: { upvotes: post.upvotes.length, downvotes: post.downvotes.length, voted: !alreadyDownvoted ? 'down' : null }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // MY POSTS — includes PENDING for the author's own view
+  // ─────────────────────────────────────────────────────────────
+  public getMyPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.query.userId;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+      const skip = (page - 1) * limit;
+
+      const [posts, total] = await Promise.all([
+        PostModel.find({ author: userId })
+          .populate('organization', 'name slug avatarImage')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        PostModel.countDocuments({ author: userId })
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: { items: posts, total, page, limit, hasMore: skip + posts.length < total }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const postController = new PostController();

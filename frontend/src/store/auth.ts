@@ -34,11 +34,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           const result = await apiLogin(email, password);
 
-          const validRoles = ["ADMIN", "ANALYST", "SUPER_ADMIN", "SECURITY_ADMIN", "MODERATOR"];
-          if (!validRoles.includes(result.user.role)) {
-            throw new Error("Admin or Analyst access required");
-          }
-
           setAccessToken(result.tokens.accessToken);
           set({
             user: result.user,
@@ -73,11 +68,6 @@ export const useAuthStore = create<AuthState>()(
         setAccessToken(accessToken);
         try {
           const user = await getProfile();
-          const validRoles = ["ADMIN", "ANALYST", "SUPER_ADMIN", "SECURITY_ADMIN", "MODERATOR"];
-          if (!validRoles.includes(user.role)) {
-            get().logout();
-            return;
-          }
           set({ user, isAuthenticated: true });
           connectSocket();
         } catch {

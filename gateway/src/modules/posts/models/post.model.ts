@@ -3,9 +3,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IPost extends Document {
   content: string;
   author: mongoose.Types.ObjectId;
-  community?: mongoose.Types.ObjectId;
+  organization?: mongoose.Types.ObjectId;
   tags: string[];
   media: string[];
+  upvotes: mongoose.Types.ObjectId[];
+  downvotes: mongoose.Types.ObjectId[];
+  commentCount: number;
   threatScore: number;
   isFlagged: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -19,9 +22,12 @@ export interface IPost extends Document {
 const PostSchema: Schema = new Schema({
   content: { type: String, required: true, maxlength: 5000 },
   author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  community: { type: Schema.Types.ObjectId, ref: 'Community' },
+  organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
   tags: [{ type: String }],
-  media: [{ type: String }], // URLs to images/videos
+  media: [{ type: String }],
+  upvotes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  downvotes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  commentCount: { type: Number, default: 0 },
   threatScore: { type: Number, default: 0 },
   isFlagged: { type: Boolean, default: false },
   status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' },
@@ -34,5 +40,7 @@ const PostSchema: Schema = new Schema({
 
 PostSchema.index({ author: 1, createdAt: -1 });
 PostSchema.index({ status: 1 });
+PostSchema.index({ organization: 1, status: 1 });
 
 export const PostModel = mongoose.model<IPost>('Post', PostSchema);
+

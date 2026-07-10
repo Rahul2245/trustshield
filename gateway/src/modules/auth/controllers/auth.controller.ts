@@ -59,6 +59,10 @@ export class AuthController {
       ApiResponse.success(res, 'User logged in successfully', result, 200);
     } catch (error: unknown) {
       if (error instanceof AppError) {
+        if (error.statusCode === 202) {
+          ApiResponse.success(res, error.message, { code: error.code }, 202);
+          return;
+        }
         ApiResponse.error(res, error.statusCode, error.message, error);
         return;
       }

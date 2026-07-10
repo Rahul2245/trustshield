@@ -57,9 +57,11 @@ export class AuthService {
             throw new AppError("Account locked due to 180+ days of inactivity. Please contact support.", 403, "ACCOUNT_INACTIVE");
         }
 
-        if (user.lastLoginAt) {
-            const daysSinceLastLogin = (new Date().getTime() - user.lastLoginAt.getTime()) / (1000 * 3600 * 24);
-            if (daysSinceLastLogin >= 180) {
+        // Dormant Account Takeover Protection (180 days)
+        const lastActiveDate = user.lastLoginAt || user.createdAt;
+        if (lastActiveDate) {
+            const daysSinceLastActive = (new Date().getTime() - lastActiveDate.getTime()) / (1000 * 3600 * 24);
+            if (daysSinceLastActive >= 180) {
                 const { UserModel } = require("../../users/models/user.model");
                 await UserModel.findByIdAndUpdate(user._id, { status: 'INACTIVE' });
                 throw new AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 202, "OTP_REQUIRED");

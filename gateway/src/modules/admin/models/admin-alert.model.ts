@@ -16,6 +16,14 @@ export interface IAdminAlert extends Document {
     acknowledged: boolean;
     acknowledgedBy?: string;
     acknowledgedAt?: Date;
+    lockedByAdminId?: string;
+    lockedAt?: Date;
+    decision?: string;
+    resolution?: string;
+    userStatus?: string;
+    remarks?: string;
+    lastUpdatedBy?: string;
+    lastUpdatedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -45,6 +53,14 @@ const AdminAlertSchema = new Schema<IAdminAlert>(
         acknowledged: { type: Boolean, default: false },
         acknowledgedBy: { type: String },
         acknowledgedAt: { type: Date },
+        lockedByAdminId: { type: String },
+        lockedAt: { type: Date },
+        decision: { type: String },
+        resolution: { type: String },
+        userStatus: { type: String },
+        remarks: { type: String },
+        lastUpdatedBy: { type: String },
+        lastUpdatedAt: { type: Date },
     },
     { timestamps: true }
 );

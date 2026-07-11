@@ -49,13 +49,8 @@ export function AlertsPage() {
   }, [filter]);
 
   const handleAcknowledge = async (alertId: string) => {
-    try {
-      await acknowledgeAlert(alertId);
-      toast.success("Alert acknowledged");
-      loadAlerts();
-    } catch {
-      toast.error("Failed to acknowledge alert");
-    }
+    // Navigating to details page instead of immediate ack because we need the decision form now
+    window.location.href = `/alerts/${alertId}`;
   };
 
   const handleLock = async (alertId: string) => {
@@ -63,12 +58,19 @@ export function AlertsPage() {
       await lockAlert(alertId);
       toast.success("Alert locked for investigation");
       // Optimistic UI update
-      setAlerts(alerts.map(a => a.alertId === alertId ? { ...a, locked: true, lockedBy: user?.id } : a));
+      setAlerts(alerts.map(a => a.alertId === alertId ? { ...a, lockedByAdminId: user?.id, lockedAt: new Date().toISOString() } : a));
     } catch {
       toast.error("Failed to lock alert or already locked");
       loadAlerts();
     }
   };
+
+  const filteredAlerts = alerts.filter(alert => {
+    const isLockedByOther = alert.lockedByAdminId && alert.lockedByAdminId !== user?.id;
+    if (filter === "pending") return !alert.acknowledged && !isLockedByOther;
+    if (filter === "acknowledged") return alert.acknowledged;
+    return true; // "all" shows everything
+  });
 
   return (
     <div className="space-y-6">
@@ -104,31 +106,39 @@ export function AlertsPage() {
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
-      ) : alerts.length === 0 ? (
+      ) : filteredAlerts.length === 0 ? (
         <Card className="border-dashed border-border bg-transparent">
           <CardContent className="py-16 flex flex-col items-center justify-center text-center">
             <div className="rounded-full bg-primary/5 p-4 mb-4">
-              <Shield className="h-8 w-8 text-muted opacity-50" />
+              <Check className="h-8 w-8 text-muted opacity-50" />
             </div>
             <h3 className="text-lg font-medium text-primary mb-1">No Active Alerts</h3>
             <p className="text-sm text-muted max-w-sm">
-              All systems nominal. Alerts will appear here when rate limits trigger or AI evaluation completes.
+              All systems nominal. You have no pending alerts to action on.
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {alerts.map((alert) => (
+        <div className="space-y-3 flex flex-col">
+          {/* Header Row for Table-like layout */}
+          <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-2 text-xs font-semibold text-muted uppercase tracking-wider">
+            <div className="col-span-5">Alert Details</div>
+            <div className="col-span-2 text-center">Locked By Me</div>
+            <div className="col-span-2 text-center">Locked By Other</div>
+            <div className="col-span-3 text-right">Actions</div>
+          </div>
+          
+          {filteredAlerts.map((alert) => (
             <Card
               key={alert.alertId}
               className={
                 !alert.acknowledged && alert.severity === "CRITICAL"
                   ? "border-red-900/50 bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.05)]"
-                  : alert.locked ? "border-yellow-900/50 bg-yellow-950/10" : ""
+                  : alert.lockedByAdminId ? "border-yellow-900/50 bg-yellow-950/10" : ""
               }
             >
-              <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-2">
+              <CardContent className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-center">
+                <div className="col-span-5 flex flex-col space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={getSeverityColor(alert.severity)}>
                       {alert.severity}
@@ -160,7 +170,26 @@ export function AlertsPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+
+                <div className="col-span-2 flex justify-center items-center">
+                  {alert.lockedByAdminId === user?.id ? (
+                    <Badge variant="outline" className="border-green-600 text-green-500">Yes</Badge>
+                  ) : (
+                    <span className="text-muted">-</span>
+                  )}
+                </div>
+
+                <div className="col-span-2 flex justify-center items-center">
+                  {alert.lockedByAdminId && alert.lockedByAdminId !== user?.id ? (
+                    <Badge variant="outline" className="border-yellow-600 text-yellow-500">
+                      {alert.acknowledged ? "Acknowledged" : "Pending"}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted">-</span>
+                  )}
+                </div>
+
+                <div className="col-span-3 flex justify-end gap-2">
                   {alert.eventId && (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/alerts/${alert.alertId}`}>
@@ -170,7 +199,7 @@ export function AlertsPage() {
                     </Button>
                   )}
                   
-                  {!alert.acknowledged && !alert.locked && (
+                  {!alert.acknowledged && !alert.lockedByAdminId && (
                      <Button
                        variant="outline"
                        size="sm"
@@ -182,7 +211,7 @@ export function AlertsPage() {
                      </Button>
                   )}
 
-                  {!alert.acknowledged && (alert.lockedBy === user?.id || !alert.locked) && (
+                  {!alert.acknowledged && alert.lockedByAdminId === user?.id && (
                     <Button
                       variant="success"
                       size="sm"
@@ -193,11 +222,17 @@ export function AlertsPage() {
                     </Button>
                   )}
                   
-                  {alert.locked && alert.lockedBy !== user?.id && (
+                  {alert.lockedByAdminId && alert.lockedByAdminId !== user?.id && !alert.acknowledged && (
                      <Button variant="secondary" size="sm" disabled>
                         <Lock className="h-4 w-4 mr-1" />
                         In Progress
                      </Button>
+                  )}
+                  
+                  {alert.acknowledged && (
+                    <Badge variant="outline" className="border-green-600 text-green-500 py-1.5 px-3">
+                      <Check className="h-4 w-4 mr-1" /> Completed
+                    </Badge>
                   )}
                 </div>
               </CardContent>

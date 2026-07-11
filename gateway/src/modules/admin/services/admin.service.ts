@@ -107,31 +107,76 @@ export class AdminService {
         return this.adminRepository.findAlerts(page, limit, acknowledged);
     }
 
-    public acknowledgeAlert(alertId: string, userId: string) {
-        return this.adminRepository.acknowledgeAlert(alertId, userId);
+    public getAlertById(alertId: string) {
+        return this.adminRepository.findAlertById(alertId);
+    }
+
+    public async acknowledgeAlert(
+        alertId: string, 
+        userId: string, 
+        payload: { decision: string, resolution: string, userStatus?: string, remarks: string }
+    ) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const { UserModel } = require("../../users/models/user.model");
+
+        const alert = await this.adminRepository.acknowledgeAlert(alertId, userId, payload);
+        
+        if (alert) {
+            if (payload.userStatus && alert.userId) {
+                await UserModel.findByIdAndUpdate(alert.userId, { status: payload.userStatus });
+            }
+            
+            await AuditLogModel.create({
+                eventType: "ALERT_ACKNOWLEDGED",
+                severity: "INFO",
+                userId,
+                metadata: {
+                    alertId,
+                    decision: payload.decision,
+                    resolution: payload.resolution,
+                    userStatus: payload.userStatus,
+                    remarks: payload.remarks
+                }
+            });
+            
+            const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
+            broadcastThreatAlert({
+                alertId,
+                type: 'ACKNOWLEDGE',
+                userId,
+                message: `Alert acknowledged by admin ${userId}`,
+            } as any);
+        }
+
+        return alert;
     }
 
     public getUnacknowledgedCount() {
         return this.adminRepository.getUnacknowledgedAlertCount();
     }
 
-    public async lockAlert(alertId: string, adminId: string, ttl: number = 300) {
-        const { redisService } = require("../../../infrastructure/redis/redis");
-        const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
+    public async lockAlert(alertId: string, adminId: string) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const lockedAlert = await this.adminRepository.lockAlert(alertId, adminId);
         
-        const lockKey = `alert:lock:${alertId}`;
-        const locked = await redisService.setLock(lockKey, adminId, ttl);
-        
-        if (locked) {
-            // Broadcast the lock to all admins via socket.io
+        if (lockedAlert) {
+            await AuditLogModel.create({
+                eventType: "ALERT_LOCKED",
+                severity: "INFO",
+                userId: adminId,
+                metadata: { alertId }
+            });
+
+            const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
             broadcastThreatAlert({
                 alertId,
                 type: 'LOCK',
                 userId: adminId,
                 message: `Alert locked by admin ${adminId}`,
             } as any);
+            return true;
         }
-        return locked;
+        return false;
     }
 
     public getUsers(page: number, limit: number, status?: string) {

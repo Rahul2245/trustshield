@@ -14,6 +14,7 @@ router.get("/trend", adminController.getTrend);
 router.get("/threats", adminController.getThreats);
 router.get("/threats/:eventId", adminController.getThreatById);
 router.get("/alerts", adminController.getAlerts);
+router.get("/alerts/:alertId", adminController.getAlertById);
 router.post("/alerts/:alertId/lock", adminController.lockAlert);
 router.patch("/alerts/:alertId/acknowledge", adminController.acknowledgeAlert);
 router.get("/users", adminController.getUsers);

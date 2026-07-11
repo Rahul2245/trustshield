@@ -101,11 +101,34 @@ export class AdminController {
         }
     };
 
+    public getAlertById = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const alertId = String(req.params.alertId);
+            const alert = await this.adminService.getAlertById(alertId);
+            if (!alert) {
+                ApiResponse.error(res, 404, "Alert not found");
+                return;
+            }
+            ApiResponse.success(res, "Alert retrieved", alert);
+        } catch (error: unknown) {
+            ApiResponse.error(res, 500, "Failed to fetch alert", error);
+        }
+    };
+
     public acknowledgeAlert = async (req: Request, res: Response): Promise<void> => {
         try {
+            const acknowledgeSchema = z.object({
+                decision: z.string().optional().default("Handled"),
+                resolution: z.string().optional().default("Completed"),
+                userStatus: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+                remarks: z.string().optional().default("")
+            });
+            const payload = acknowledgeSchema.parse(req.body);
+
             const alert = await this.adminService.acknowledgeAlert(
                 String(req.params.alertId),
-                req.user!.id
+                req.user!.id,
+                payload
             );
             if (!alert) {
                 ApiResponse.error(res, 404, "Alert not found");

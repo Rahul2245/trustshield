@@ -66,10 +66,24 @@ export interface ThreatAlert {
   acknowledged?: boolean;
   acknowledgedBy?: string;
   acknowledgedAt?: string;
-  locked?: boolean;
-  lockedBy?: string;
+  lockedByAdminId?: string;
+  lockedAt?: string;
+  decision?: string;
+  resolution?: string;
+  userStatus?: string;
+  remarks?: string;
+  lastUpdatedBy?: string;
+  lastUpdatedAt?: string;
   timestamp?: string;
   createdAt?: string;
+  targetUser?: User & {
+    bio?: string;
+    avatar?: string;
+    coverImage?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: any;
+  };
 }
 
 export interface ThreatMatrix {

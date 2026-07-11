@@ -93,9 +93,17 @@ export async function getAlerts(params: {
   return data.data;
 }
 
-export async function acknowledgeAlert(alertId: string) {
+export async function getAlertById(alertId: string) {
+  const { data } = await api.get<ApiResponse<ThreatAlert & { auditLogs?: any[] }>>(
+    `/api/v1/admin/alerts/${alertId}`
+  );
+  return data.data;
+}
+
+export async function acknowledgeAlert(alertId: string, payload: { decision: string, resolution: string, userStatus?: string, remarks: string }) {
   const { data } = await api.patch<ApiResponse<ThreatAlert>>(
-    `/api/v1/admin/alerts/${alertId}/acknowledge`
+    `/api/v1/admin/alerts/${alertId}/acknowledge`,
+    payload
   );
   return data.data;
 }

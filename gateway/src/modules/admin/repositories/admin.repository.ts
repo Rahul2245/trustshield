@@ -143,13 +143,56 @@ export class AdminRepository {
         return { items, total, page, limit };
     }
 
-    public async acknowledgeAlert(alertId: string, userId: string) {
+    public async findAlertById(alertId: string) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const alert = await AdminAlertModel.findOne({ alertId }).lean().exec();
+        if (!alert) return null;
+
+        const auditLogs = await AuditLogModel.find({ "metadata.alertId": alertId })
+            .sort({ createdAt: 1 })
+            .lean()
+            .exec();
+
+        let targetUser = null;
+        if (alert.userId) {
+            targetUser = await UserModel.findById(alert.userId).select("-password").lean().exec();
+        } else if (alert.email) {
+            targetUser = await UserModel.findOne({ email: alert.email }).select("-password").lean().exec();
+        }
+
+        return { ...alert, auditLogs, targetUser };
+    }
+
+    public async acknowledgeAlert(alertId: string, userId: string, payload: { decision: string, resolution: string, userStatus?: string, remarks: string }) {
         return AdminAlertModel.findOneAndUpdate(
-            { alertId },
+            { alertId, $or: [{ lockedByAdminId: userId }, { lockedByAdminId: { $exists: false } }, { lockedByAdminId: null }] },
             {
                 acknowledged: true,
                 acknowledgedBy: userId,
                 acknowledgedAt: new Date(),
+                decision: payload.decision,
+                resolution: payload.resolution,
+                userStatus: payload.userStatus,
+                remarks: payload.remarks,
+                lastUpdatedBy: userId,
+                lastUpdatedAt: new Date()
+            },
+            { new: true }
+        ).exec();
+    }
+
+    public async lockAlert(alertId: string, adminId: string) {
+        return AdminAlertModel.findOneAndUpdate(
+            { 
+                alertId, 
+                acknowledged: false,
+                $or: [{ lockedByAdminId: { $exists: false } }, { lockedByAdminId: null }, { lockedByAdminId: adminId }] 
+            },
+            {
+                lockedByAdminId: adminId,
+                lockedAt: new Date(),
+                lastUpdatedBy: adminId,
+                lastUpdatedAt: new Date()
             },
             { new: true }
         ).exec();

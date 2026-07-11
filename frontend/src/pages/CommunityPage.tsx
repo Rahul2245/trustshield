@@ -54,7 +54,7 @@ export const CommunityPage: React.FC = () => {
         </div>
       </div>
 
-      {user && (
+      {user && !user.isUnderInvestigation && (
         <PostComposer onPostCreated={fetchFeed} />
       )}
 

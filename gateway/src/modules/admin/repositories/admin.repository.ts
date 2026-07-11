@@ -235,7 +235,12 @@ export class AdminRepository {
     }
 
     public async updateUserStatus(userId: string, status: IUser["status"]) {
-        const user = await UserModel.findByIdAndUpdate(userId, { status }, { new: true })
+        const updateQuery: any = { status };
+        if (status === "ACTIVE") {
+            updateQuery.isUnderInvestigation = false;
+        }
+
+        const user = await UserModel.findByIdAndUpdate(userId, updateQuery, { new: true })
             .select("-password")
             .lean()
             .exec();

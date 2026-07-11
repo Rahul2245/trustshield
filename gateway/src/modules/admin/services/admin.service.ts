@@ -123,7 +123,11 @@ export class AdminService {
         
         if (alert) {
             if (payload.userStatus && alert.userId) {
-                await UserModel.findByIdAndUpdate(alert.userId, { status: payload.userStatus });
+                const updateQuery: any = { status: payload.userStatus };
+                if (payload.userStatus === "ACTIVE") {
+                    updateQuery.isUnderInvestigation = false;
+                }
+                await UserModel.findByIdAndUpdate(alert.userId, updateQuery);
             }
             
             await AuditLogModel.create({

@@ -7,6 +7,7 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  isUnderInvestigation: boolean;
   lastLoginAt?: Date;
   
   // Social Platform Fields
@@ -28,6 +29,7 @@ const UserSchema: Schema = new Schema({
   password: { type: String, required: true },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.USER },
   status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
+  isUnderInvestigation: { type: Boolean, default: false },
   lastLoginAt: { type: Date },
   
   // Social Platform Fields

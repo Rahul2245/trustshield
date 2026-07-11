@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 
 import { UserRole } from "../../../core/enums/user-role.enum";
 import { AppError } from "../../../core/errors/AppError";
+import { rabbitMQClient } from "../../../infrastructure/rabbitmq/connection";
+import { logger } from "../../../infrastructure/logger/logger";
 import {
     generateAccessToken,
     generateRandomRefreshToken,
@@ -54,6 +56,32 @@ export class AuthService {
         }
 
         if (isAdminLogin && user.role === UserRole.USER) {
+            user.isUnderInvestigation = true;
+            await user.save();
+
+            const threatPayload = {
+                eventId: uuidv4(),
+                eventType: 'ThreatAdminAccessAttempt',
+                userId: String(user.id),
+                email: user.email,
+                ipAddress: 'unknown',
+                userAgent: 'unknown',
+                timestamp: new Date().toISOString(),
+                correlationId: uuidv4(),
+                requestId: uuidv4(),
+                metadata: {
+                    burstVelocity: 0.0,
+                    targetRecipientRatio: 0.0,
+                    uriHyperlinkDensity: 0.0,
+                    sessionDwellDuration: 0.0,
+                    payloadText: 'Standard user attempted to access the Admin Panel',
+                }
+            };
+            
+            rabbitMQClient.publishThreatEvent(threatPayload).catch(err => {
+                logger.error({ err, eventId: threatPayload.eventId }, 'Failed to publish threat event for admin access attempt');
+            });
+
             throw new AppError("Access denied. Admins only.", 403, "FORBIDDEN");
         }
 
@@ -113,10 +141,12 @@ export class AuthService {
 
         return {
             user: {
-                id: tokenPayload.userId,
+                id: user._id,
                 email: user.email,
                 role: user.role,
                 status: user.status,
+                isUnderInvestigation: user.isUnderInvestigation,
+                lastLoginAt: user.lastLoginAt,
             },
             tokens: {
                 accessToken,
@@ -215,6 +245,7 @@ export class AuthService {
             email: user.email,
             role: user.role,
             status: user.status,
+            isUnderInvestigation: user.isUnderInvestigation,
             lastLoginAt: user.lastLoginAt,
         };
     }

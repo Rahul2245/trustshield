@@ -9,6 +9,7 @@ export interface User {
   email: string;
   role: UserRole;
   status: AccountStatus;
+  isUnderInvestigation?: boolean;
   lastLoginAt?: string;
 }
 

@@ -81,7 +81,7 @@ export const PostDetailPage: React.FC = () => {
       <PostCard post={post} onUpdate={fetchData} isDetail={true} />
 
       <div className="border-b border-slate-200">
-        {user ? (
+        {user && !user.isUnderInvestigation ? (
           <form onSubmit={handleReplySubmit} className="flex gap-4 p-4 border-b border-slate-200">
             <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} alt="" className="w-12 h-12 rounded-full bg-slate-200 object-cover" />
             <div className="flex-1 flex flex-col">

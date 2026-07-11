@@ -5,6 +5,8 @@ import { PostModel } from '../models/post.model';
 import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
 import { logger } from '../../../infrastructure/logger/logger';
 import { AdminService } from '../../admin/services/admin.service';
+import { UserModel } from '../../users/models/user.model';
+import { AppError } from '../../../core/errors/AppError';
 
 const adminService = new AdminService();
 
@@ -15,6 +17,10 @@ export class PostController {
   // ─────────────────────────────────────────────────────────────
   public createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const user = await UserModel.findById(req.user?.id || req.body.authorId);
+      if (user?.isUnderInvestigation) {
+          throw new AppError("Your account is under investigation for suspicious activity. You cannot post.", 403, "FORBIDDEN");
+      }
       const post = new PostModel({
         content: req.body.content,
         author: req.user?.id || req.body.authorId,

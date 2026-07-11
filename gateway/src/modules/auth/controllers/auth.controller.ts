@@ -97,11 +97,28 @@ export class AuthController {
 
   public refresh = async (req: Request, res: Response): Promise<void> => {
     try {
-      // Determine context by which cookie is present
+      // Determine context by inspecting the expired access token if provided
+      const authHeader = req.headers.authorization;
+      let requestedRole = 'USER';
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+          const expiredToken = authHeader.split(' ')[1];
+          try {
+              const jwt = require('jsonwebtoken');
+              const decoded = jwt.decode(expiredToken) as any;
+              if (decoded && decoded.role && decoded.role !== 'USER') {
+                  requestedRole = 'ADMIN';
+              }
+          } catch (e) {
+              // ignore
+          }
+      }
+
       const userRefreshToken = req.cookies?.refreshToken;
       const adminRefreshToken = req.cookies?.adminRefreshToken;
 
-      const tokenToUse = userRefreshToken || adminRefreshToken;
+      let tokenToUse = requestedRole === 'ADMIN' 
+          ? (adminRefreshToken || userRefreshToken) 
+          : (userRefreshToken || adminRefreshToken);
 
       if (!tokenToUse) {
          ApiResponse.error(res, 401, 'No refresh token cookie found');

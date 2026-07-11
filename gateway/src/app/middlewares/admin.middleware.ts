@@ -21,20 +21,20 @@ export const adminMiddleware = (
 
     if (!role || !adminRoles.includes(role)) {
         if (req.user?.id) {
-            import("../../modules/users/models/user.model").then(async ({ UserModel }) => {
+            import("../../modules/users/models/user.model.js").then(async ({ UserModel }) => {
                 const user = await UserModel.findById(req.user!.id);
                 if (user && user.role === UserRole.USER && !user.isUnderInvestigation) {
                     user.isUnderInvestigation = true;
                     await user.save();
 
                     const { v4: uuidv4 } = await import("uuid");
-                    const { rabbitMQClient } = await import("../../infrastructure/rabbitmq/connection");
-                    const { logger } = await import("../../infrastructure/logger/logger");
+                    const { rabbitMQClient } = await import("../../infrastructure/rabbitmq/connection.js");
+                    const { logger } = await import("../../infrastructure/logger/logger.js");
 
                     const threatPayload = {
                         eventId: uuidv4(),
                         eventType: 'ThreatAdminAccessAttempt',
-                        userId: String(user.id),
+                        userId: String(user._id),
                         email: user.email,
                         ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
                         userAgent: req.headers['user-agent'] || 'unknown',
@@ -50,7 +50,7 @@ export const adminMiddleware = (
                         }
                     };
 
-                    rabbitMQClient.publishThreatEvent(threatPayload as any).catch(err => {
+                    rabbitMQClient.publishThreatEvent(threatPayload as any).catch((err: any) => {
                         logger.error({ err, eventId: threatPayload.eventId }, 'Failed to publish threat event for admin route access attempt');
                     });
                 }

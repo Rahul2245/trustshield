@@ -5,7 +5,7 @@ class AppError extends Error {
     statusCode;
     code;
     isOperational;
-    constructor(message, statusCode, code, isOperational = true) {
+    constructor(message, statusCode, code = "INTERNAL_ERROR", isOperational = true) {
         super(message);
         this.statusCode = statusCode;
         this.code = code;

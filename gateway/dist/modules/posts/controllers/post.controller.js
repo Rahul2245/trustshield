@@ -10,6 +10,8 @@ const post_model_1 = require("../models/post.model");
 const connection_1 = require("../../../infrastructure/rabbitmq/connection");
 const logger_1 = require("../../../infrastructure/logger/logger");
 const admin_service_1 = require("../../admin/services/admin.service");
+const user_model_1 = require("../../users/models/user.model");
+const AppError_1 = require("../../../core/errors/AppError");
 const adminService = new admin_service_1.AdminService();
 class PostController {
     // ─────────────────────────────────────────────────────────────
@@ -17,6 +19,10 @@ class PostController {
     // ─────────────────────────────────────────────────────────────
     createPost = async (req, res, next) => {
         try {
+            const user = await user_model_1.UserModel.findById(req.user?.id || req.body.authorId);
+            if (user?.isUnderInvestigation) {
+                throw new AppError_1.AppError("Your account is under investigation for suspicious activity. You cannot post.", 403, "FORBIDDEN");
+            }
             const post = new post_model_1.PostModel({
                 content: req.body.content,
                 author: req.user?.id || req.body.authorId,

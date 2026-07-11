@@ -32,37 +32,19 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RefreshTokenModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const crypto_1 = __importDefault(require("crypto"));
-const RefreshTokenSchema = new mongoose_1.Schema({
+const refreshTokenSchema = new mongoose_1.Schema({
     tokenHash: { type: String, required: true },
-    userId: { type: mongoose_1.Schema.Types.ObjectId, required: true, ref: 'User' },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
     sessionId: { type: String, required: true },
     expiresAt: { type: Date, required: true },
     revoked: { type: Boolean, default: false },
-    userAgent: { type: String },
-    ipAddress: { type: String },
-}, {
-    timestamps: true
-});
-// TTL Index to automatically clean up expired tokens
-RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-RefreshTokenSchema.index({ userId: 1 });
-RefreshTokenSchema.index({ sessionId: 1 });
-RefreshTokenSchema.pre('save', function () {
-    if (!this.isModified('tokenHash'))
-        return;
-    const hash = crypto_1.default.createHash('sha256').update(this.tokenHash).digest('hex');
-    this.tokenHash = hash;
-});
-RefreshTokenSchema.methods.compareToken = async function (candidateToken) {
-    const hash = crypto_1.default.createHash('sha256').update(candidateToken).digest('hex');
-    return this.tokenHash === hash;
-};
-exports.RefreshTokenModel = mongoose_1.default.model('RefreshToken', RefreshTokenSchema);
+}, { timestamps: true });
+// Index to automatically remove expired tokens (TTL)
+refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+refreshTokenSchema.index({ userId: 1 });
+refreshTokenSchema.index({ tokenHash: 1 }); // Needed for lookups
+exports.RefreshTokenModel = mongoose_1.default.model("RefreshToken", refreshTokenSchema);
 //# sourceMappingURL=refresh-token.model.js.map

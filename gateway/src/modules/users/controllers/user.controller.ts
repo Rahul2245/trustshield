@@ -8,7 +8,7 @@ export class UserController {
   // ─────────────────────────────────────────────────────────────
   public getMyProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user?._id;
+      const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Not authenticated' });
         return;
@@ -31,7 +31,7 @@ export class UserController {
   // ─────────────────────────────────────────────────────────────
   public updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user?._id;
+      const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Not authenticated' });
         return;

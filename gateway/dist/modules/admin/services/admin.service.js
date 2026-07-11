@@ -87,7 +87,11 @@ class AdminService {
         const alert = await this.adminRepository.acknowledgeAlert(alertId, userId, payload);
         if (alert) {
             if (payload.userStatus && alert.userId) {
-                await UserModel.findByIdAndUpdate(alert.userId, { status: payload.userStatus });
+                const updateQuery = { status: payload.userStatus };
+                if (payload.userStatus === "ACTIVE") {
+                    updateQuery.isUnderInvestigation = false;
+                }
+                await UserModel.findByIdAndUpdate(alert.userId, updateQuery);
             }
             await AuditLogModel.create({
                 eventType: "ALERT_ACKNOWLEDGED",

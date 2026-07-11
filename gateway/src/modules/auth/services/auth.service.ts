@@ -62,7 +62,7 @@ export class AuthService {
             const threatPayload = {
                 eventId: uuidv4(),
                 eventType: 'ThreatAdminAccessAttempt',
-                userId: String(user.id),
+                userId: String(user._id),
                 email: user.email,
                 ipAddress: 'unknown',
                 userAgent: 'unknown',

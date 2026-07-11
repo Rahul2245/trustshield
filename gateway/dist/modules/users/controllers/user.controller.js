@@ -8,7 +8,7 @@ class UserController {
     // ─────────────────────────────────────────────────────────────
     getMyProfile = async (req, res, next) => {
         try {
-            const userId = req.user?._id;
+            const userId = req.user?.id;
             if (!userId) {
                 res.status(401).json({ success: false, message: 'Not authenticated' });
                 return;
@@ -29,7 +29,7 @@ class UserController {
     // ─────────────────────────────────────────────────────────────
     updateProfile = async (req, res, next) => {
         try {
-            const userId = req.user?._id;
+            const userId = req.user?.id;
             if (!userId) {
                 res.status(401).json({ success: false, message: 'Not authenticated' });
                 return;

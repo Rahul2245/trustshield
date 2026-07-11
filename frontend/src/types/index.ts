@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   status: AccountStatus;
   isUnderInvestigation?: boolean;
+  avatar?: string;
   lastLoginAt?: string;
 }
 

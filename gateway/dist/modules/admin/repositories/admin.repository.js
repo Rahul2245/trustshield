@@ -185,7 +185,11 @@ class AdminRepository {
         return { items: mappedItems, total, page, limit };
     }
     async updateUserStatus(userId, status) {
-        const user = await user_model_1.UserModel.findByIdAndUpdate(userId, { status }, { new: true })
+        const updateQuery = { status };
+        if (status === "ACTIVE") {
+            updateQuery.isUnderInvestigation = false;
+        }
+        const user = await user_model_1.UserModel.findByIdAndUpdate(userId, updateQuery, { new: true })
             .select("-password")
             .lean()
             .exec();

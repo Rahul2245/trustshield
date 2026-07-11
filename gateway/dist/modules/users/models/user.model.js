@@ -45,6 +45,7 @@ const UserSchema = new mongoose_1.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: Object.values(user_role_enum_1.UserRole), default: user_role_enum_1.UserRole.USER },
     status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
+    isUnderInvestigation: { type: Boolean, default: false },
     lastLoginAt: { type: Date },
     // Social Platform Fields
     avatar: { type: String, default: null },

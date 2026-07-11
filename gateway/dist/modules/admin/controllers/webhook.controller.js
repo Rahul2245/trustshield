@@ -7,6 +7,7 @@ const api_response_1 = require("../../../shared/responses/api-response");
 const admin_service_1 = require("../services/admin.service");
 const webhookSchema = zod_1.z.object({
     event_id: zod_1.z.string(),
+    event_type: zod_1.z.string().default("auth_login"),
     correlation_id: zod_1.z.string(),
     user_id: zod_1.z.string(),
     risk_score: zod_1.z.number(),

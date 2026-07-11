@@ -14,6 +14,7 @@ import type {
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // Allow sending HttpOnly cookies
 });
 
 let accessToken: string | null = null;
@@ -26,6 +27,7 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+// Attach access token to headers
 api.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -33,11 +35,66 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Automatic token rotation interceptor
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Prevent intercepting auth routes to allow them to handle their own errors (e.g. wrong password)
+    if (
+      originalRequest.url === "/api/v1/auth/refresh" ||
+      originalRequest.url === "/api/v1/auth/login" ||
+      originalRequest.url === "/api/v1/auth/admin-login"
+    ) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // The HttpOnly refresh token cookie will be sent automatically
+        const { data } = await axios.post<{ data: { accessToken: string } }>(
+          `${api.defaults.baseURL}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        setAccessToken(data.data.accessToken);
+
+        // Update the failed request with new token
+        originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed (e.g. cookie expired or revoked). Clear state and force relogin
+        setAccessToken(null);
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export async function login(email: string, password: string) {
   const { data } = await api.post<
     ApiResponse<{ user: User; tokens: AuthTokens }>
   >("/api/v1/auth/login", { email, password });
   return data.data;
+}
+
+export async function adminLogin(email: string, password: string) {
+  const { data } = await api.post<
+    ApiResponse<{ user: User; tokens: AuthTokens }>
+  >("/api/v1/auth/admin-login", { email, password });
+  return data.data;
+}
+
+export async function logout() {
+  await api.post("/api/v1/auth/logout");
+  setAccessToken(null);
 }
 
 export async function getProfile() {

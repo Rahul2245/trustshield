@@ -43,3 +43,8 @@ export function verifyRefreshToken(token: string): JwtPayload {
         jwtConfig.refreshSecret
     ) as JwtPayload;
 }
+
+export function generateRandomRefreshToken(): string {
+    const crypto = require("crypto");
+    return crypto.randomBytes(40).toString("hex");
+}

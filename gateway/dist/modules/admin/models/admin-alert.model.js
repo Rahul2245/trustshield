@@ -59,6 +59,14 @@ const AdminAlertSchema = new mongoose_1.Schema({
     acknowledged: { type: Boolean, default: false },
     acknowledgedBy: { type: String },
     acknowledgedAt: { type: Date },
+    lockedByAdminId: { type: String },
+    lockedAt: { type: Date },
+    decision: { type: String },
+    resolution: { type: String },
+    userStatus: { type: String },
+    remarks: { type: String },
+    lastUpdatedBy: { type: String },
+    lastUpdatedAt: { type: Date },
 }, { timestamps: true });
 AdminAlertSchema.index({ createdAt: -1 });
 AdminAlertSchema.index({ acknowledged: 1, createdAt: -1 });

@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import {
   getProfile,
   login as apiLogin,
+  adminLogin as apiAdminLogin,
   setAccessToken,
 } from "@/services/api";
 import { connectSocket, disconnectSocket } from "@/services/socket";
@@ -15,7 +16,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, isAdmin?: boolean) => Promise<void>;
   logout: () => void;
   hydrate: () => Promise<void>;
 }
@@ -29,10 +30,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email, password) => {
+      login: async (email, password, isAdmin = false) => {
         set({ isLoading: true });
         try {
-          const result = await apiLogin(email, password);
+          const result = isAdmin 
+            ? await apiAdminLogin(email, password)
+            : await apiLogin(email, password);
 
           setAccessToken(result.tokens.accessToken);
           set({

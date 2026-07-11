@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 
 import routes from "./routes";
 import internalRoutes from "../modules/admin/routes/internal.routes";
@@ -21,6 +22,8 @@ app.use(requestIdMiddleware);
 app.use(requestLogger);
 
 app.use(helmet());
+
+app.use(cookieParser());
 
 app.use(cors({
     origin: env.FRONTEND_ORIGIN,

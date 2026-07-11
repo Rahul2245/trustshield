@@ -21,14 +21,18 @@ export class AuthController {
       const result = await this.authService.register(validatedData);
       ApiResponse.success(res, 'User registered successfully', result, 201);
     } catch (error: unknown) {
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.statusCode, error.message, error);
+        return;
+      }
       ApiResponse.error(res, 400, 'Registration failed', error);
     }
   };
 
-  public login = async (req: Request, res: Response): Promise<void> => {
+  private async processLogin(req: Request, res: Response, isAdminLogin: boolean): Promise<void> {
     try {
       const validatedData = LoginSchema.parse(req.body);
-      const result = await this.authService.login(validatedData);
+      const result = await this.authService.login(validatedData, isAdminLogin);
 
       const clientIp = this.extractClientIp(req);
       const correlationId = uuidv4();
@@ -48,7 +52,7 @@ export class AuthController {
           targetRecipientRatio: 0.0,
           uriHyperlinkDensity: 0.0,
           sessionDwellDuration: 0.0,
-          payloadText: 'User login attempt',
+          payloadText: isAdminLogin ? 'Admin login attempt' : 'User login attempt',
         }
       };
       
@@ -56,7 +60,20 @@ export class AuthController {
         logger.error({ err, eventId: threatPayload.eventId }, 'Failed to publish threat event');
       });
 
-      ApiResponse.success(res, 'User logged in successfully', result, 200);
+      const cookieName = isAdminLogin ? 'adminRefreshToken' : 'refreshToken';
+
+      res.cookie(cookieName, result.tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: result.expiresAt
+      });
+
+      // Remove refreshToken from body as it is now in cookie
+      const { refreshToken, ...tokensWithoutRefresh } = result.tokens;
+      const responseData = { ...result, tokens: tokensWithoutRefresh };
+
+      ApiResponse.success(res, 'User logged in successfully', responseData, 200);
     } catch (error: unknown) {
       if (error instanceof AppError) {
         if (error.statusCode === 202) {
@@ -67,6 +84,87 @@ export class AuthController {
         return;
       }
       ApiResponse.error(res, 401, 'Login failed', error);
+    }
+  }
+
+  public login = async (req: Request, res: Response): Promise<void> => {
+    await this.processLogin(req, res, false);
+  };
+
+  public adminLogin = async (req: Request, res: Response): Promise<void> => {
+    await this.processLogin(req, res, true);
+  };
+
+  public refresh = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Determine context by which cookie is present
+      const userRefreshToken = req.cookies?.refreshToken;
+      const adminRefreshToken = req.cookies?.adminRefreshToken;
+
+      const tokenToUse = userRefreshToken || adminRefreshToken;
+
+      if (!tokenToUse) {
+         ApiResponse.error(res, 401, 'No refresh token cookie found');
+         return;
+      }
+
+      const result = await this.authService.refresh(tokenToUse);
+
+      const cookieName = result.userRole === 'USER' ? 'refreshToken' : 'adminRefreshToken';
+
+      res.cookie(cookieName, result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: result.expiresAt
+      });
+
+      ApiResponse.success(res, 'Token refreshed successfully', { accessToken: result.accessToken }, 200);
+    } catch (error: unknown) {
+      // If refresh fails, kill the cookies
+      res.clearCookie('refreshToken');
+      res.clearCookie('adminRefreshToken');
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.statusCode, error.message, error);
+        return;
+      }
+      ApiResponse.error(res, 401, 'Refresh failed', error);
+    }
+  };
+
+  public logout = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userRefreshToken = req.cookies?.refreshToken;
+      const adminRefreshToken = req.cookies?.adminRefreshToken;
+      const tokenToUse = userRefreshToken || adminRefreshToken;
+
+      if (tokenToUse) {
+        await this.authService.logout(tokenToUse);
+      }
+
+      res.clearCookie('refreshToken');
+      res.clearCookie('adminRefreshToken');
+
+      ApiResponse.success(res, 'Logged out successfully', null, 200);
+    } catch (error: unknown) {
+      ApiResponse.error(res, 500, 'Logout failed', error);
+    }
+  };
+
+  public logoutAll = async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+         ApiResponse.error(res, 401, 'Unauthorized');
+         return;
+      }
+      await this.authService.logoutAll(req.user.id);
+
+      res.clearCookie('refreshToken');
+      res.clearCookie('adminRefreshToken');
+
+      ApiResponse.success(res, 'Logged out from all devices successfully', null, 200);
+    } catch (error: unknown) {
+      ApiResponse.error(res, 500, 'Logout all failed', error);
     }
   };
 

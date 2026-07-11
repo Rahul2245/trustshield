@@ -111,11 +111,47 @@ class AdminRepository {
         ]);
         return { items, total, page, limit };
     }
-    async acknowledgeAlert(alertId, userId) {
-        return admin_alert_model_1.AdminAlertModel.findOneAndUpdate({ alertId }, {
+    async findAlertById(alertId) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const alert = await admin_alert_model_1.AdminAlertModel.findOne({ alertId }).lean().exec();
+        if (!alert)
+            return null;
+        const auditLogs = await AuditLogModel.find({ "metadata.alertId": alertId })
+            .sort({ createdAt: 1 })
+            .lean()
+            .exec();
+        let targetUser = null;
+        if (alert.userId) {
+            targetUser = await user_model_1.UserModel.findById(alert.userId).select("-password").lean().exec();
+        }
+        else if (alert.email) {
+            targetUser = await user_model_1.UserModel.findOne({ email: alert.email }).select("-password").lean().exec();
+        }
+        return { ...alert, auditLogs, targetUser };
+    }
+    async acknowledgeAlert(alertId, userId, payload) {
+        return admin_alert_model_1.AdminAlertModel.findOneAndUpdate({ alertId, $or: [{ lockedByAdminId: userId }, { lockedByAdminId: { $exists: false } }, { lockedByAdminId: null }] }, {
             acknowledged: true,
             acknowledgedBy: userId,
             acknowledgedAt: new Date(),
+            decision: payload.decision,
+            resolution: payload.resolution,
+            userStatus: payload.userStatus,
+            remarks: payload.remarks,
+            lastUpdatedBy: userId,
+            lastUpdatedAt: new Date()
+        }, { new: true }).exec();
+    }
+    async lockAlert(alertId, adminId) {
+        return admin_alert_model_1.AdminAlertModel.findOneAndUpdate({
+            alertId,
+            acknowledged: false,
+            $or: [{ lockedByAdminId: { $exists: false } }, { lockedByAdminId: null }, { lockedByAdminId: adminId }]
+        }, {
+            lockedByAdminId: adminId,
+            lockedAt: new Date(),
+            lastUpdatedBy: adminId,
+            lastUpdatedAt: new Date()
         }, { new: true }).exec();
     }
     async getUnacknowledgedAlertCount() {

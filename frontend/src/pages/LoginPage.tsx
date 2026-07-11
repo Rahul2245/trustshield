@@ -19,7 +19,7 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      await login(email, password, true);
       toast.success("Welcome back, Admin");
       navigate("/dashboard");
     } catch (error) {

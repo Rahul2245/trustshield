@@ -8,6 +8,10 @@ const authController = new AuthController();
 
 router.post('/register', authController.register);
 router.post('/login', rateLimiterMiddleware, authController.login);
+router.post('/admin-login', rateLimiterMiddleware, authController.adminLogin);
+router.post('/refresh', authController.refresh);
+router.post('/logout', authController.logout);
+router.post('/logout-all', authMiddleware, authController.logoutAll);
 router.get('/me', authMiddleware, authController.me);
 
 export default router;

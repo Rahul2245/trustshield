@@ -15,29 +15,34 @@ const rateLimiterMiddleware = async (req, res, next) => {
             : req.socket.remoteAddress || "unknown_ip";
         const targetAccount = req.body?.email || "unknown_account";
         const windowSeconds = 60;
+        const maxRequests = 10;
         const ipTrackingKey = `rate:ip:${clientIp}`;
         const accountTrackingKey = `rate:account:${targetAccount}`;
-        const redisClient = redis_1.redis.getClient();
-        const results = await redisClient.multi()
-            .incr(ipTrackingKey)
-            .incr(accountTrackingKey)
-            .exec();
-        if (!results || results.length !== 2) {
-            return next();
+        // Use safe redisService methods - gracefully skip if Redis is down
+        try {
+            const client = redis_1.redisService.getClient();
+            const ipCount = await client.incr(ipTrackingKey);
+            if (ipCount === 1)
+                await client.expire(ipTrackingKey, windowSeconds);
+            const accountCount = await client.incr(accountTrackingKey);
+            if (accountCount === 1)
+                await client.expire(accountTrackingKey, windowSeconds);
+            console.log("DEBUG RATE LIMIT", { ipTrackingKey, accountTrackingKey, ipCount, accountCount });
+            if (ipCount > maxRequests || accountCount > maxRequests) {
+                adminService.createRateLimitAlert({
+                    ipAddress: clientIp,
+                    email: req.body?.email,
+                    correlationId: req.requestId || (0, uuid_1.v4)(),
+                }).catch(err => logger_1.logger.error(err, "Failed to broadcast rate limit alert"));
+                throw new AppError_1.AppError("Too many requests, please try again later.", 429, "RATE_LIMIT_EXCEEDED");
+            }
         }
-        const ipCount = results[0][1];
-        const accountCount = results[1][1];
-        if (ipCount === 1)
-            await redisClient.expire(ipTrackingKey, windowSeconds);
-        if (accountCount === 1)
-            await redisClient.expire(accountTrackingKey, windowSeconds);
-        if (ipCount > 5 || accountCount > 5) {
-            adminService.createRateLimitAlert({
-                ipAddress: clientIp,
-                email: req.body?.email,
-                correlationId: req.requestId || (0, uuid_1.v4)(),
-            }).catch(err => logger_1.logger.error(err, "Failed to broadcast rate limit alert"));
-            throw new AppError_1.AppError("Too many requests, please try again later.", 429, "RATE_LIMIT_EXCEEDED");
+        catch (redisErr) {
+            // If it's our own rate limit error, re-throw it
+            if (redisErr instanceof AppError_1.AppError)
+                throw redisErr;
+            // Otherwise, Redis is just down - log and continue
+            logger_1.logger.warn({ redisErr }, "Rate limiter Redis error - skipping rate limit check");
         }
         next();
     }

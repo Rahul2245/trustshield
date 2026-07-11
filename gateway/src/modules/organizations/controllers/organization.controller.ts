@@ -51,7 +51,7 @@ export class OrganizationController {
   public getOrganizationById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      const isObjectId = mongoose.Types.ObjectId.isValid(id);
+      const isObjectId = mongoose.Types.ObjectId.isValid(id as string);
 
       const org = await OrganizationModel
         .findOne(isObjectId ? { _id: id } : { slug: id })

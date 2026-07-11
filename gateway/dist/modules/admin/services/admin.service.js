@@ -4,6 +4,7 @@ exports.AdminService = void 0;
 const uuid_1 = require("uuid");
 const socket_1 = require("../../../infrastructure/websocket/socket");
 const admin_repository_1 = require("../repositories/admin.repository");
+const post_model_1 = require("../../posts/models/post.model");
 class AdminService {
     adminRepository;
     constructor() {
@@ -12,6 +13,27 @@ class AdminService {
     async processAiWebhook(payload) {
         const severity = this.resolveSeverity(payload.risk_score, payload.action);
         const alertType = this.resolveAlertType(payload.action);
+        // Update Post or Comment based on event_type
+        if (payload.event_type === "new_post") {
+            const status = payload.action === "ALLOW" ? "APPROVED" : (payload.action === "BLOCK" ? "REJECTED" : "PENDING");
+            await post_model_1.PostModel.findByIdAndUpdate(payload.event_id, {
+                status,
+                isFlagged: payload.action !== "ALLOW",
+                threatScore: payload.risk_score,
+                aiVerdict: payload.action === "BLOCK" || payload.action === "SHADOW",
+            });
+        }
+        else if (payload.event_type === "new_comment") {
+            // Need to require CommentModel at the top or dynamically import to avoid circular dep if any, but let's assume it's imported
+            const { CommentModel } = require("../../comments/models/comment.model");
+            const status = payload.action === "ALLOW" ? "APPROVED" : (payload.action === "BLOCK" ? "REJECTED" : "PENDING");
+            await CommentModel.findByIdAndUpdate(payload.event_id, {
+                status,
+                isFlagged: payload.action !== "ALLOW",
+                threatScore: payload.risk_score,
+                aiVerdict: payload.action === "BLOCK" || payload.action === "SHADOW",
+            });
+        }
         const alert = await this.adminRepository.createAlert({
             alertId: (0, uuid_1.v4)(),
             eventId: payload.event_id,
@@ -22,7 +44,7 @@ class AdminService {
             riskScore: payload.risk_score,
             action: payload.action,
             message: `AI evaluation complete: ${payload.action} (risk ${payload.risk_score.toFixed(1)})`,
-            metadata: { source: "ai-worker" },
+            metadata: { source: "ai-worker", event_type: payload.event_type },
         });
         this.broadcastAlert(alert);
         return alert;
@@ -56,11 +78,62 @@ class AdminService {
     getAlerts(page, limit, acknowledged) {
         return this.adminRepository.findAlerts(page, limit, acknowledged);
     }
-    acknowledgeAlert(alertId, userId) {
-        return this.adminRepository.acknowledgeAlert(alertId, userId);
+    getAlertById(alertId) {
+        return this.adminRepository.findAlertById(alertId);
+    }
+    async acknowledgeAlert(alertId, userId, payload) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const { UserModel } = require("../../users/models/user.model");
+        const alert = await this.adminRepository.acknowledgeAlert(alertId, userId, payload);
+        if (alert) {
+            if (payload.userStatus && alert.userId) {
+                await UserModel.findByIdAndUpdate(alert.userId, { status: payload.userStatus });
+            }
+            await AuditLogModel.create({
+                eventType: "ALERT_ACKNOWLEDGED",
+                severity: "INFO",
+                userId,
+                metadata: {
+                    alertId,
+                    decision: payload.decision,
+                    resolution: payload.resolution,
+                    userStatus: payload.userStatus,
+                    remarks: payload.remarks
+                }
+            });
+            const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
+            broadcastThreatAlert({
+                alertId,
+                type: 'ACKNOWLEDGE',
+                userId,
+                message: `Alert acknowledged by admin ${userId}`,
+            });
+        }
+        return alert;
     }
     getUnacknowledgedCount() {
         return this.adminRepository.getUnacknowledgedAlertCount();
+    }
+    async lockAlert(alertId, adminId) {
+        const { AuditLogModel } = require("../../audit/models/audit-log.model");
+        const lockedAlert = await this.adminRepository.lockAlert(alertId, adminId);
+        if (lockedAlert) {
+            await AuditLogModel.create({
+                eventType: "ALERT_LOCKED",
+                severity: "INFO",
+                userId: adminId,
+                metadata: { alertId }
+            });
+            const { broadcastThreatAlert } = require("../../../infrastructure/websocket/socket");
+            broadcastThreatAlert({
+                alertId,
+                type: 'LOCK',
+                userId: adminId,
+                message: `Alert locked by admin ${adminId}`,
+            });
+            return true;
+        }
+        return false;
     }
     getUsers(page, limit, status) {
         return this.adminRepository.findAllUsers(page, limit, status);

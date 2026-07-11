@@ -14,6 +14,8 @@ async function bootstrap() {
     try {
         logger_1.logger.info("Starting TrustShield Gateway...");
         await (0, database_1.connectMongoDB)();
+        const { redisService } = require('./infrastructure/redis/redis');
+        await redisService.connect();
         await connection_1.rabbitMQClient.connect();
         const httpServer = (0, http_1.createServer)(app_1.default);
         (0, socket_1.initializeSocketServer)(httpServer);

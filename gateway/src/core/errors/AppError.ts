@@ -6,7 +6,7 @@ export class AppError extends Error {
     constructor(
         message: string,
         statusCode: number,
-        code: string,
+        code: string = "INTERNAL_ERROR",
         isOperational = true
     ) {
         super(message);

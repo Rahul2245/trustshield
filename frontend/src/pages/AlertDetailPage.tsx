@@ -173,6 +173,35 @@ export function AlertDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Threat Description / Payload Panel */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-accent-blue" /> Threat Description & Payload
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-primary/5 p-4 rounded-xl border border-border/50">
+                  <div className="flex items-center gap-2 mb-2 text-muted">
+                    <span className="text-xs uppercase tracking-wider font-semibold">Alert Message</span>
+                  </div>
+                  <p className="font-medium text-primary">{alert.message}</p>
+                </div>
+                {alert.metadata && Object.keys(alert.metadata).length > 0 && (
+                  <div className="bg-primary/5 p-4 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 mb-2 text-muted">
+                      <span className="text-xs uppercase tracking-wider font-semibold">Data Payload / Metadata</span>
+                    </div>
+                    <pre className="text-xs font-mono bg-surface p-3 rounded border border-border text-primary overflow-x-auto whitespace-pre-wrap">
+                      {JSON.stringify(alert.metadata, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Audit Trail */}
           <Card>
             <CardHeader>
@@ -369,10 +398,32 @@ export function AlertDetailPage() {
                 <span className="text-muted">Severity</span>
                 <Badge className={getSeverityColor(alert.severity)}>{alert.severity}</Badge>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted">Generated Time</span>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span className="text-muted">Event Generated Time</span>
                 <span className="font-medium text-primary">{alert.timestamp ? new Date(alert.timestamp).toLocaleString() : "Unknown"}</span>
               </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span className="text-muted">Alert Created Time</span>
+                <span className="font-medium text-primary">{alert.createdAt ? new Date(alert.createdAt).toLocaleString() : "Unknown"}</span>
+              </div>
+              {alert.lockedAt && (
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted">Locked Time</span>
+                  <span className="font-medium text-primary">{new Date(alert.lockedAt).toLocaleString()}</span>
+                </div>
+              )}
+              {alert.acknowledgedAt && (
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted">Acknowledged Time</span>
+                  <span className="font-medium text-primary">{new Date(alert.acknowledgedAt).toLocaleString()}</span>
+                </div>
+              )}
+              {alert.lastUpdatedAt && (
+                <div className="flex justify-between">
+                  <span className="text-muted">Last Updated Time</span>
+                  <span className="font-medium text-primary">{new Date(alert.lastUpdatedAt).toLocaleString()}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

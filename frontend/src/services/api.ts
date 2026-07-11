@@ -11,7 +11,7 @@ import type {
   User,
 } from "@/types";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
   headers: { "Content-Type": "application/json" },
   withCredentials: true, // Allow sending HttpOnly cookies

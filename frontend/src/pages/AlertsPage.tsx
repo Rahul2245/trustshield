@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, ExternalLink, Lock, RefreshCw } from "lucide-react";
+import { Check, ExternalLink, Lock, RefreshCw, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -16,14 +16,14 @@ import { useAuthStore } from "@/store/auth";
 export function AlertsPage() {
   const [alerts, setAlerts] = useState<ThreatAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "acknowledged">("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "acknowledged" | "acknowledgedByMe">("all");
   
   const { user } = useAuthStore();
 
   const loadAlerts = () => {
     setLoading(true);
     const acknowledged =
-      filter === "pending" ? false : filter === "acknowledged" ? true : undefined;
+      filter === "pending" ? false : (filter === "acknowledged" || filter === "acknowledgedByMe") ? true : undefined;
 
     getAlerts({ page: 1, limit: 50, acknowledged })
       .then((data) => setAlerts(data.items))
@@ -40,7 +40,7 @@ export function AlertsPage() {
     const unsubscribe = onThreatAlert(() => {
       // Re-fetch alerts from server when a new alert arrives via Socket.IO
       const acknowledged =
-        filter === "pending" ? false : filter === "acknowledged" ? true : undefined;
+        filter === "pending" ? false : (filter === "acknowledged" || filter === "acknowledgedByMe") ? true : undefined;
       getAlerts({ page: 1, limit: 50, acknowledged })
         .then((data) => setAlerts(data.items))
         .catch(() => {});
@@ -69,6 +69,7 @@ export function AlertsPage() {
     const isLockedByOther = alert.lockedByAdminId && alert.lockedByAdminId !== user?.id;
     if (filter === "pending") return !alert.acknowledged && !isLockedByOther;
     if (filter === "acknowledged") return alert.acknowledged;
+    if (filter === "acknowledgedByMe") return alert.acknowledged && alert.acknowledgedBy === user?.id;
     return true; // "all" shows everything
   });
 
@@ -88,14 +89,14 @@ export function AlertsPage() {
       </div>
 
       <div className="flex gap-2">
-        {(["all", "pending", "acknowledged"] as const).map((f) => (
+        {(["all", "pending", "acknowledged", "acknowledgedByMe"] as const).map((f) => (
           <Button
             key={f}
             variant={filter === f ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter(f)}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === "acknowledgedByMe" ? "Acknowledged By Me" : f.charAt(0).toUpperCase() + f.slice(1)}
           </Button>
         ))}
       </div>
@@ -122,10 +123,11 @@ export function AlertsPage() {
         <div className="space-y-3 flex flex-col">
           {/* Header Row for Table-like layout */}
           <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-2 text-xs font-semibold text-muted uppercase tracking-wider">
-            <div className="col-span-5">Alert Details</div>
+            <div className="col-span-4">Alert Details</div>
             <div className="col-span-2 text-center">Locked By Me</div>
             <div className="col-span-2 text-center">Locked By Other</div>
-            <div className="col-span-3 text-right">Actions</div>
+            <div className="col-span-2 text-center">Ack By Me</div>
+            <div className="col-span-2 text-right">Actions</div>
           </div>
           
           {filteredAlerts.map((alert) => (
@@ -138,7 +140,7 @@ export function AlertsPage() {
               }
             >
               <CardContent className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-center">
-                <div className="col-span-5 flex flex-col space-y-2">
+                <div className="col-span-4 flex flex-col space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={getSeverityColor(alert.severity)}>
                       {alert.severity}
@@ -169,6 +171,14 @@ export function AlertsPage() {
                       <span>Risk: {alert.riskScore.toFixed(1)}</span>
                     )}
                   </div>
+                  <div className="flex gap-2 text-xs text-muted">
+                    {alert.timestamp && (
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Event: {new Date(alert.timestamp).toLocaleString()}</span>
+                    )}
+                    {alert.createdAt && (
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Alerted: {new Date(alert.createdAt).toLocaleString()}</span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="col-span-2 flex justify-center items-center">
@@ -189,7 +199,15 @@ export function AlertsPage() {
                   )}
                 </div>
 
-                <div className="col-span-3 flex justify-end gap-2">
+                <div className="col-span-2 flex justify-center items-center">
+                  {alert.acknowledged && alert.acknowledgedBy === user?.id ? (
+                    <Badge variant="outline" className="border-green-600 text-green-500">Yes</Badge>
+                  ) : (
+                    <span className="text-muted">-</span>
+                  )}
+                </div>
+
+                <div className="col-span-2 flex justify-end gap-2">
                   {alert.eventId && (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/alerts/${alert.alertId}`}>

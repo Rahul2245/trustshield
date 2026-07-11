@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { OrganizationModel } from '../models/organization.model';
 import { PostModel } from '../../posts/models/post.model';
+import { UserModel } from '../../users/models/user.model';
 
 export class OrganizationController {
 

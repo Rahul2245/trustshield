@@ -4,7 +4,7 @@ export interface IAdminAlert extends Document {
     alertId: string;
     eventId?: string;
     correlationId: string;
-    type: "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW";
+    type: "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW" | "USER_REPORT";
     severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
     userId?: string;
     email?: string;
@@ -35,7 +35,7 @@ const AdminAlertSchema = new Schema<IAdminAlert>(
         correlationId: { type: String, required: true, index: true },
         type: {
             type: String,
-            enum: ["RATE_LIMIT", "AI_THREAT", "BLOCK", "SHADOW"],
+            enum: ["RATE_LIMIT", "AI_THREAT", "BLOCK", "SHADOW", "USER_REPORT"],
             required: true,
         },
         severity: {

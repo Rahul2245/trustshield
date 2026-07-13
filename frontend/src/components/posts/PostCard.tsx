@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, ShieldAlert, MessageCircle, Share2, ArrowUp, ArrowDown, Flag } from "lucide-react";
 import { toggleVotePost } from "@/services/community-api";
+import { useAuthStore } from "@/store/auth";
 
 interface PostCardProps {
   post: any;
@@ -10,6 +11,7 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, isDetail = false }) => {
+  const { user } = useAuthStore();
   const [localScore, setLocalScore] = useState(post.score || 0);
   const [localVote, setLocalVote] = useState<'up'|'down'|null>(null); // We could infer from current user ID if passed, but typically fetched from backend
 
@@ -140,10 +142,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, isDetail = f
             <span>Share</span>
           </button>
           
-          <button className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-slate-100 transition-colors ml-auto">
-            <Flag size={16} className="text-slate-400" />
-            <span className="hidden sm:inline">Report</span>
-          </button>
+          {user && user.id !== post.author?._id && (
+            <button onClick={async () => {
+              const reason = window.prompt("Why are you reporting this post?");
+              if (!reason) return;
+              try {
+                const { reportPost } = await import("@/services/community-api");
+                await reportPost(post._id, reason);
+                alert("Post reported successfully. Our admin team will review it.");
+              } catch (err) {
+                console.error(err);
+                alert("Failed to report post.");
+              }
+            }} className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-slate-100 transition-colors ml-auto">
+              <Flag size={16} className="text-slate-400" />
+              <span className="hidden sm:inline">Report</span>
+            </button>
+          )}
         </div>
 
       </div>

@@ -101,7 +101,10 @@ export const CommunityPage: React.FC = () => {
       )}
 
       {user && !user.isUnderInvestigation && (
-        <PostComposer onPostCreated={fetchFeed} />
+        <PostComposer 
+          onPostCreated={fetchFeed} 
+          orgId={feedContext === 'global' ? '' : feedContext} 
+        />
       )}
 
       {!user && (

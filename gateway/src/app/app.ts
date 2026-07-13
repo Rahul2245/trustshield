@@ -38,7 +38,11 @@ app.use(express.urlencoded({ extended: true }));
 
 
 
+import path from "path";
+
 //server health
+
+app.use("/uploads", express.static(path.join(__dirname, "../../../uploads")));
 
 app.get("/health",(_,res)=>{
     res.status(200).json({

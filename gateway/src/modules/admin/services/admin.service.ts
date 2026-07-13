@@ -23,6 +23,30 @@ export class AdminService {
         this.adminRepository = new AdminRepository();
     }
 
+    public async createUserReport(postId: string, reporterId: string, reason: string, postAuthorId: string) {
+        const alertData: Partial<IAdminAlert> = {
+            alertId: `REP-${uuidv4().slice(0, 8).toUpperCase()}`,
+            eventId: postId,
+            correlationId: uuidv4(),
+            type: "USER_REPORT",
+            severity: "MEDIUM",
+            userId: postAuthorId,
+            message: `User report: ${reason}`,
+            metadata: { reporterId, reason },
+        };
+        const alert = await this.adminRepository.createAlert(alertData);
+        
+        const payload: ThreatAlertPayload = {
+            alertId: alert.alertId,
+            type: alert.type,
+            severity: alert.severity,
+            message: alert.message,
+            timestamp: new Date().toISOString(),
+        };
+        broadcastThreatAlert(payload);
+        return alert;
+    }
+
     public async processAiWebhook(payload: WebhookPayload) {
         const severity = this.resolveSeverity(payload.risk_score, payload.action);
         const alertType = this.resolveAlertType(payload.action);

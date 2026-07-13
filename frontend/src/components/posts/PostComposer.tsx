@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Image, Smile, Loader2, Tag, X, ChevronDown } from "lucide-react";
 import { createPost, getOrganizations } from "@/services/community-api";
 import { useAuthStore } from "@/store/auth";
+import EmojiPicker from "emoji-picker-react";
 
 interface PostComposerProps {
   onPostCreated: () => void;
@@ -11,28 +12,13 @@ interface PostComposerProps {
 export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState<string>(orgId || "");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [myOrgs, setMyOrgs] = useState<any[]>([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { user } = useAuthStore();
-
-  useEffect(() => {
-    if (!orgId) {
-      // Fetch orgs to populate the dropdown
-      getOrganizations().then(res => {
-        if (res.success) {
-          // Filter to just "joined" orgs or owned orgs
-          const joinedOrgs = res.data.items.filter((org: any) => 
-            org.members?.includes(user?.id) || 
-            org.ownerId?._id === user?.id || 
-            org.ownerId === user?.id
-          );
-          setMyOrgs(joinedOrgs);
-        }
-      });
-    }
-  }, [orgId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +28,13 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
     try {
       await createPost({ 
         content, 
-        organizationId: selectedOrg || undefined,
-        tags: tags.length > 0 ? tags : undefined
-      } as any); // Backend currently doesn't strictly type tags in frontend API call, but we can pass it
+        organizationId: orgId || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        mediaUrls: mediaUrl ? [mediaUrl] : undefined
+      } as any); 
       setContent("");
       setTags([]);
-      setSelectedOrg(orgId || "");
+      setMediaUrl("");
       onPostCreated();
     } catch (error) {
       console.error(error);
@@ -66,25 +53,34 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
     }
   };
 
+  const handleEmojiClick = (emojiData: any) => {
+    setContent(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      // Import uploadMedia dynamically or ensure it's imported at top
+      const { uploadMedia } = await import("@/services/community-api");
+      const res = await uploadMedia(file);
+      if (res.success) {
+        setMediaUrl(res.url);
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const authorImage = user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'anon'}`;
 
   return (
     <div className="bg-white p-4 border border-slate-200 rounded-2xl shadow-sm mb-4">
-      {!orgId && (
-        <div className="mb-3 flex items-center gap-2">
-          <select 
-            value={selectedOrg} 
-            onChange={(e) => setSelectedOrg(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block px-2.5 py-1.5 outline-none font-bold appearance-none cursor-pointer pr-8 relative"
-            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.2rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-          >
-            <option value="">Global Feed (No Community)</option>
-            {myOrgs.map(org => (
-              <option key={org._id} value={org._id}>c/{org.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
 
       <div className="flex gap-4">
         <div className="shrink-0 w-12 pt-1">
@@ -94,7 +90,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={selectedOrg ? "Post to this community..." : "What is happening?!"}
+            placeholder={orgId ? "Post to this community..." : "What is happening?!"}
             className="w-full min-h-[60px] bg-transparent border-none resize-none focus:outline-none text-[17px] placeholder-slate-500 text-slate-900 py-1"
             rows={content.split('\n').length > 1 ? content.split('\n').length : 2}
           />
@@ -111,16 +107,38 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
             </div>
           )}
 
+          {/* Media preview */}
+          {mediaUrl && (
+            <div className="relative mb-2 inline-block">
+              <img src={`http://localhost:5000${mediaUrl}`} alt="Upload preview" className="max-h-48 rounded-lg border border-slate-200 object-contain" />
+              <button 
+                type="button" 
+                onClick={() => setMediaUrl("")} 
+                className="absolute top-1 right-1 bg-slate-800 text-white rounded-full p-1 hover:bg-slate-700"
+              >
+                <X size={14}/>
+              </button>
+            </div>
+          )}
+          
           <div className="flex justify-between items-center mt-2 border-t border-slate-100 pt-3">
             <div className="flex items-center gap-1 text-orange-500 relative">
-              <button type="button" className="p-2 hover:bg-orange-50 rounded-full transition-colors group relative">
-                <Image size={20} />
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Add Media</span>
+              <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" />
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-orange-50 rounded-full transition-colors group relative">
+                {isUploading ? <Loader2 size={20} className="animate-spin text-orange-400" /> : <Image size={20} />}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">Add Media</span>
               </button>
-              <button type="button" className="p-2 hover:bg-orange-50 rounded-full transition-colors relative group">
-                <Smile size={20} />
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">Emoji</span>
-              </button>
+              <div className="relative">
+                <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 hover:bg-orange-50 rounded-full transition-colors relative group">
+                  <Smile size={20} />
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">Emoji</span>
+                </button>
+                {showEmojiPicker && (
+                  <div className="absolute z-50 top-full mt-2 left-0 shadow-xl rounded-xl">
+                    <EmojiPicker onEmojiClick={handleEmojiClick} />
+                  </div>
+                )}
+              </div>
               <div className="relative group ml-1 flex items-center">
                 <Tag size={18} className="absolute left-2 text-slate-400" />
                 <input 

@@ -501,6 +501,35 @@ export class PostController {
       next(error);
     }
   };
+  // ─────────────────────────────────────────────────────────────
+  // REPORT POST
+  // ─────────────────────────────────────────────────────────────
+  public reportPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.body.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+        res.status(404).json({ success: false, message: 'Post not found' });
+        return;
+      }
+      const { reason } = req.body;
+      if (!reason) {
+        res.status(400).json({ success: false, message: 'Reason is required' });
+        return;
+      }
+      
+      const adminServiceInstance = new AdminService();
+      await adminServiceInstance.createUserReport(post._id.toString(), userId, reason, post.author.toString());
+      
+      res.status(200).json({ success: true, message: 'Post reported successfully' });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const postController = new PostController();

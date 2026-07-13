@@ -111,3 +111,17 @@ export const loginUser = async (data: { email: string; password: string }) => {
   const res = await axios.post(`${API_URL}/auth/login`, data);
   return res.data;
 };
+
+export const uploadMedia = async (file: File) => {
+  const formData = new FormData();
+  formData.append('media', file);
+  const res = await apiClient.post("/api/v1/posts/upload", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
+export const reportPost = async (postId: string, reason: string) => {
+  const res = await apiClient.post(`/api/v1/posts/${postId}/report`, { reason });
+  return res.data;
+};

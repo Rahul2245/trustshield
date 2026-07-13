@@ -162,13 +162,18 @@ export class AdminRepository {
 
         let targetPost = null;
         let reporterUser = null;
-        if (alert.type === "USER_REPORT" && alert.eventId) {
+        if (alert.eventId) {
             const { PostModel } = require("../../posts/models/post.model");
             targetPost = await PostModel.findById(alert.eventId).populate('author', 'email avatar').lean().exec();
             
-            if (alert.metadata && alert.metadata.reporterId) {
-                reporterUser = await UserModel.findById(alert.metadata.reporterId).select("email avatar").lean().exec();
+            if (!targetPost) {
+                const { CommentModel } = require("../../comments/models/comment.model");
+                targetPost = await CommentModel.findById(alert.eventId).populate('author', 'email avatar').lean().exec();
             }
+        }
+        
+        if (alert.type === "USER_REPORT" && alert.metadata && alert.metadata.reporterId) {
+            reporterUser = await UserModel.findById(alert.metadata.reporterId).select("email avatar").lean().exec();
         }
 
         return { ...alert, auditLogs, targetUser, targetPost, reporterUser };

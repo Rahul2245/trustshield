@@ -188,12 +188,12 @@ export function AlertDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Reported Post Panel */}
-          {alert.type === "USER_REPORT" && alert.targetPost && (
+          {/* Associated Content Panel */}
+          {alert.targetPost && (
             <Card className="border-red-500/20">
               <CardHeader className="bg-red-500/5 border-b border-red-500/10">
                 <CardTitle className="flex items-center gap-2 text-red-600">
-                  <AlertTriangle className="h-5 w-5" /> Reported Content
+                  <AlertTriangle className="h-5 w-5" /> Associated Content
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
@@ -216,7 +216,9 @@ export function AlertDetailPage() {
                   )}
                   
                   <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">Report Reason</p>
+                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">
+                      {alert.type === "USER_REPORT" ? "Report Reason" : "Trigger Reason"}
+                    </p>
                     <p className="text-sm text-red-800 font-medium">{alert.metadata?.reason || alert.message}</p>
                   </div>
                 </div>

@@ -303,13 +303,28 @@ export class PostController {
       const skip = (page - 1) * limit;
       const sortType = (req.query.sort as string) || 'hot'; // 'hot', 'new', 'top'
 
-      const query: Record<string, unknown> = { status: 'APPROVED' };
+      let query: any = { status: 'APPROVED' };
       if (req.query.orgId) {
         if (req.query.orgId === 'global') {
           query.organization = null;
         } else {
           query.organization = req.query.orgId;
         }
+      } else {
+        // "All Posts" feed: Global + Joined Communities
+        const userOrgs = [];
+        if (req.user?.id) {
+          const { OrganizationModel } = require('../../organizations/models/organization.model');
+          const orgs = await OrganizationModel.find({ 
+            $or: [{ members: req.user.id }, { ownerId: req.user.id }] 
+          }).select('_id').lean();
+          userOrgs.push(...orgs.map((o: any) => o._id));
+        }
+        
+        query.$or = [
+          { organization: null },
+          { organization: { $in: userOrgs } }
+        ];
       }
       
       if (req.query.topic) {

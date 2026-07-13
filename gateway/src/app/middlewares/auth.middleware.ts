@@ -45,3 +45,30 @@ export const authMiddleware = async (
         next(error);
     }
 };
+
+export const optionalAuthMiddleware = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return next();
+        }
+        const token = authHeader.split(" ")[1];
+        const isBlacklisted = await redisService.get(`blacklist:${token}`);
+        if (isBlacklisted) {
+            return next();
+        }
+        try {
+            const decoded = verifyAccessToken(token) as JwtPayload;
+            req.user = { id: decoded.userId, email: decoded.email, role: decoded.role };
+        } catch (err: unknown) {
+            // Ignore invalid token in optional auth
+        }
+        next();
+    } catch (error) {
+        next();
+    }
+};

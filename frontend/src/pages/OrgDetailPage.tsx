@@ -51,6 +51,8 @@ export const OrgDetailPage: React.FC = () => {
   }
 
   const isMember = user ? org.members?.includes(user.id) : false;
+  const isOwner = user ? org.ownerId?._id === user.id : false;
+  const hasAccess = isMember || isOwner;
 
   const handleJoinLeave = async () => {
     if (!user) return;
@@ -125,26 +127,34 @@ export const OrgDetailPage: React.FC = () => {
 
       <div className="h-3 bg-slate-50 border-y border-slate-200" />
 
-      {user && isMember && (
+      {user && hasAccess && (
         <PostComposer onPostCreated={fetchData} orgId={org._id} />
       )}
 
-      {!user && (
+      {!user ? (
         <div className="p-4 bg-slate-50 text-center text-sm text-slate-500 border-b border-slate-200">
           <Link to="/login" className="text-orange-600 hover:underline">Log in</Link> to view and post.
         </div>
-      )}
-
-      <div>
-        {posts.map(post => (
-          <PostCard key={post._id} post={post} onUpdate={fetchData} />
-        ))}
-        {posts.length === 0 && (
-          <div className="p-8 text-center text-slate-500 font-medium">
-            No posts in this community yet.
+      ) : !hasAccess ? (
+        <div className="p-12 text-center bg-slate-50/50">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldCheck size={32} className="text-slate-400" />
           </div>
-        )}
-      </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Private Community</h3>
+          <p className="text-slate-500">You must join this community to view its posts.</p>
+        </div>
+      ) : (
+        <div>
+          {posts.map(post => (
+            <PostCard key={post._id} post={post} onUpdate={fetchData} />
+          ))}
+          {posts.length === 0 && (
+            <div className="p-8 text-center text-slate-500 font-medium">
+              No posts in this community yet.
+            </div>
+          )}
+        </div>
+      )}
     </CommunityLayout>
   );
 };

@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { postController } from '../controllers/post.controller';
-import { authMiddleware } from '../../../app/middlewares/auth.middleware';
+import { authMiddleware, optionalAuthMiddleware } from '../../../app/middlewares/auth.middleware';
 
 const router = Router();
 
 // Public routes
 router.get('/', postController.getPosts);
-router.get('/feed', postController.getFeed);
+router.get('/feed', optionalAuthMiddleware, postController.getFeed);
 router.get('/trending-topics', postController.getTrendingTopics);
 router.get('/:id', postController.getPostById);
 

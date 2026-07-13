@@ -8,6 +8,7 @@ export interface IPost extends Document {
   media: string[];
   upvotes: mongoose.Types.ObjectId[];
   downvotes: mongoose.Types.ObjectId[];
+  score: number;
   commentCount: number;
   threatScore: number;
   isFlagged: boolean;
@@ -27,6 +28,7 @@ const PostSchema: Schema = new Schema({
   media: [{ type: String }],
   upvotes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   downvotes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  score: { type: Number, default: 0 },
   commentCount: { type: Number, default: 0 },
   threatScore: { type: Number, default: 0 },
   isFlagged: { type: Boolean, default: false },
@@ -41,6 +43,7 @@ const PostSchema: Schema = new Schema({
 PostSchema.index({ author: 1, createdAt: -1 });
 PostSchema.index({ status: 1 });
 PostSchema.index({ organization: 1, status: 1 });
+PostSchema.index({ score: -1, createdAt: -1 });
 
 export const PostModel = mongoose.model<IPost>('Post', PostSchema);
 

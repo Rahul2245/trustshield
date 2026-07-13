@@ -12,6 +12,6 @@ router.get('/:id/posts', organizationController.getOrganizationPosts);
 // Auth-required routes
 router.post('/', authMiddleware, organizationController.createOrganization);
 router.post('/:id/join', authMiddleware, organizationController.joinOrganization);
-router.delete('/:id/leave', authMiddleware, organizationController.leaveOrganization);
+router.post('/:id/leave', authMiddleware, organizationController.leaveOrganization);
 
 export default router;

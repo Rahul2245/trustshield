@@ -6,6 +6,7 @@ export interface IOrganization extends Document {
   description: string;
   ownerId: mongoose.Types.ObjectId;
   members: mongoose.Types.ObjectId[];
+  moderators: mongoose.Types.ObjectId[];
   bannerImage?: string;
   avatarImage?: string;
   rules: string[];
@@ -22,6 +23,7 @@ const OrganizationSchema: Schema = new Schema({
   description: { type: String, required: true },
   ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  moderators: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   bannerImage: { type: String, default: null },
   avatarImage: { type: String, default: null },
   rules: [{ type: String }],

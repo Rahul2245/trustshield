@@ -168,13 +168,19 @@ export class CommentController {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // LIKE COMMENT
+  // TOGGLE VOTE
   // ─────────────────────────────────────────────────────────────
-  public likeComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public toggleVote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id || req.body.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      const { type } = req.body; // 'up' or 'down'
+      if (type !== 'up' && type !== 'down') {
+        res.status(400).json({ success: false, message: 'Invalid vote type. Use "up" or "down".' });
         return;
       }
 
@@ -185,18 +191,33 @@ export class CommentController {
       }
 
       const userObjId = new mongoose.Types.ObjectId(userId);
-      const alreadyLiked = comment.likes.some(id => id.equals(userObjId));
+      const hasUpvoted = comment.upvotes.some(id => id.equals(userObjId));
+      const hasDownvoted = comment.downvotes.some(id => id.equals(userObjId));
 
-      if (alreadyLiked) {
-        comment.likes = comment.likes.filter(id => !id.equals(userObjId));
-      } else {
-        comment.likes.push(userObjId);
+      comment.upvotes = comment.upvotes.filter(id => !id.equals(userObjId));
+      comment.downvotes = comment.downvotes.filter(id => !id.equals(userObjId));
+
+      let currentVote: 'up' | 'down' | null = null;
+
+      if (type === 'up' && !hasUpvoted) {
+        comment.upvotes.push(userObjId);
+        currentVote = 'up';
+      } else if (type === 'down' && !hasDownvoted) {
+        comment.downvotes.push(userObjId);
+        currentVote = 'down';
       }
 
+      comment.score = comment.upvotes.length - comment.downvotes.length;
       await comment.save();
+
       res.status(200).json({
         success: true,
-        data: { likes: comment.likes.length, liked: !alreadyLiked }
+        data: { 
+          upvotes: comment.upvotes.length, 
+          downvotes: comment.downvotes.length, 
+          score: comment.score,
+          voted: currentVote 
+        }
       });
     } catch (error) {
       next(error);

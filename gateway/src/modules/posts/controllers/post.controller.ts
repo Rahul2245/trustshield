@@ -266,6 +266,110 @@ export class PostController {
       next(error);
     }
   };
+
+  // ─────────────────────────────────────────────────────────────
+  // GET FEED — Sort by Hot, New, Top
+  // ─────────────────────────────────────────────────────────────
+  public getFeed = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+      const skip = (page - 1) * limit;
+      const sortType = (req.query.sort as string) || 'hot'; // 'hot', 'new', 'top'
+
+      const query: Record<string, unknown> = { status: 'APPROVED' };
+      if (req.query.orgId) query.organization = req.query.orgId;
+
+      let sortObj: any = { createdAt: -1 };
+      if (sortType === 'top') {
+        sortObj = { score: -1, createdAt: -1 };
+      } else if (sortType === 'hot') {
+        // Basic hot algorithm approximation: higher score + newer
+        sortObj = { score: -1, createdAt: -1 }; 
+      }
+
+      const [posts, total] = await Promise.all([
+        PostModel.find(query)
+          .populate('author', 'email avatar bio')
+          .populate('organization', 'name slug avatarImage')
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit),
+        PostModel.countDocuments(query)
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          items: posts,
+          total,
+          page,
+          limit,
+          hasMore: skip + posts.length < total
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // TOGGLE VOTE (Reddit style)
+  // ─────────────────────────────────────────────────────────────
+  public toggleVote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id || req.body.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      const { type } = req.body; // 'up' or 'down'
+      if (type !== 'up' && type !== 'down') {
+        res.status(400).json({ success: false, message: 'Invalid vote type. Use "up" or "down".' });
+        return;
+      }
+
+      const post = await PostModel.findById(req.params.id);
+      if (!post) {
+        res.status(404).json({ success: false, message: 'Post not found' });
+        return;
+      }
+
+      const userObjId = new mongoose.Types.ObjectId(userId);
+      const hasUpvoted = post.upvotes.some(id => id.equals(userObjId));
+      const hasDownvoted = post.downvotes.some(id => id.equals(userObjId));
+
+      // Reset both arrays for this user
+      post.upvotes = post.upvotes.filter(id => !id.equals(userObjId));
+      post.downvotes = post.downvotes.filter(id => !id.equals(userObjId));
+
+      let currentVote: 'up' | 'down' | null = null;
+
+      if (type === 'up' && !hasUpvoted) {
+        post.upvotes.push(userObjId);
+        currentVote = 'up';
+      } else if (type === 'down' && !hasDownvoted) {
+        post.downvotes.push(userObjId);
+        currentVote = 'down';
+      }
+
+      post.score = post.upvotes.length - post.downvotes.length;
+      await post.save();
+
+      res.status(200).json({
+        success: true,
+        data: { 
+          upvotes: post.upvotes.length, 
+          downvotes: post.downvotes.length, 
+          score: post.score,
+          voted: currentVote 
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const postController = new PostController();

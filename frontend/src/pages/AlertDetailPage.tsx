@@ -12,7 +12,7 @@ import type { ThreatAlert } from "@/types";
 import { cn, getSeverityColor } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 
-type AlertWithAudit = ThreatAlert & { auditLogs?: any[] };
+type AlertWithAudit = ThreatAlert & { auditLogs?: any[], targetPost?: any, reporterUser?: any };
 
 export function AlertDetailPage() {
   const { alertId } = useParams<{ alertId: string }>();
@@ -166,12 +166,63 @@ export function AlertDetailPage() {
                   <div className="flex items-center gap-2 mb-2 text-muted">
                     <ShieldAlert className="h-4 w-4" /> <span className="text-xs uppercase tracking-wider font-semibold">Target Account</span>
                   </div>
-                  <p className="text-primary font-medium">{alert.email || "Unknown"}</p>
+                  <p className="text-primary font-medium">{alert.email || alert.targetUser?.email || "Unknown"}</p>
                   <p className="text-xs text-muted mt-1 font-mono">ID: {alert.correlationId}</p>
                 </div>
               </div>
+
+              {alert.type === "USER_REPORT" && alert.reporterUser && (
+                <div className="mt-4 bg-orange-500/10 p-4 rounded-xl border border-orange-500/20">
+                  <div className="flex items-center gap-2 mb-2 text-orange-600">
+                    <User className="h-4 w-4" /> <span className="text-xs uppercase tracking-wider font-semibold">Reported By</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <img src={alert.reporterUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${alert.reporterUser._id}`} alt="Reporter" className="h-8 w-8 rounded-full border border-orange-200" />
+                    <div>
+                      <p className="text-sm font-medium text-primary">{alert.reporterUser.email}</p>
+                      <p className="text-xs text-muted">User ID: {alert.reporterUser._id}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Reported Post Panel */}
+          {alert.type === "USER_REPORT" && alert.targetPost && (
+            <Card className="border-red-500/20">
+              <CardHeader className="bg-red-500/5 border-b border-red-500/10">
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="h-5 w-5" /> Reported Content
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="bg-surface border border-border p-4 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src={alert.targetPost.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${alert.targetPost.author?._id}`} alt="Author" className="w-8 h-8 rounded-full border border-border" />
+                    <div>
+                      <p className="text-sm font-bold text-primary">{alert.targetPost.author?.email}</p>
+                      <p className="text-xs text-muted">Posted on {new Date(alert.targetPost.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <p className="text-primary font-medium mb-3">{alert.targetPost.content}</p>
+                  
+                  {alert.targetPost.media && alert.targetPost.media.length > 0 && (
+                    <div className="rounded-xl overflow-hidden border border-slate-200 mb-3">
+                      {alert.targetPost.media.map((url: string, idx: number) => (
+                        <img key={idx} src={`http://localhost:5000${url}`} alt="Post media" className="w-full h-auto max-h-[300px] object-cover" />
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">Report Reason</p>
+                    <p className="text-sm text-red-800 font-medium">{alert.metadata?.reason || alert.message}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Threat Description / Payload Panel */}
           <Card>

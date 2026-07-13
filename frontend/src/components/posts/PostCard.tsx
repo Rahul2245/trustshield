@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, ShieldAlert, MessageCircle, Share2, ArrowUp, ArrowDown } from "lucide-react";
-import { upvotePost, downvotePost } from "@/services/community-api";
+import { ShieldCheck, ShieldAlert, MessageCircle, Share2, ArrowUp, ArrowDown, Flag } from "lucide-react";
+import { toggleVotePost } from "@/services/community-api";
 
 interface PostCardProps {
   post: any;
@@ -10,108 +10,142 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, isDetail = false }) => {
-  const handleUpvote = async (e: React.MouseEvent) => {
+  const [localScore, setLocalScore] = useState(post.score || 0);
+  const [localVote, setLocalVote] = useState<'up'|'down'|null>(null); // We could infer from current user ID if passed, but typically fetched from backend
+
+  const handleVote = async (e: React.MouseEvent, type: 'up' | 'down') => {
     e.preventDefault();
     try {
-      await upvotePost(post._id);
-      if (onUpdate) onUpdate();
+      const res = await toggleVotePost(post._id, type);
+      if (res.success) {
+        setLocalScore(res.data.score);
+        setLocalVote(res.data.voted);
+        if (onUpdate) onUpdate();
+      }
     } catch (error) {}
   };
 
-  const handleDownvote = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    try {
-      await downvotePost(post._id);
-      if (onUpdate) onUpdate();
-    } catch (error) {}
-  };
-
-  const netVotes = (post.upvotes?.length || 0) - (post.downvotes?.length || 0);
-  
-  // Decide how to render the author image
   const authorImage = post.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author?._id}`;
   const authorName = post.author?.email?.split('@')[0] || "anonymous";
 
   return (
-    <article className={`flex gap-3 bg-white p-4 ${!isDetail ? 'border-b border-slate-200 hover:bg-slate-50 transition-colors' : ''}`}>
-      {/* Left side: Avatar and Voting (Reddit style on detail, X style on feed) */}
-      <div className="flex flex-col items-center shrink-0 w-12">
-        <Link to={`/user/${post.author?._id}`}>
-          <img src={authorImage} alt={authorName} className="w-10 h-10 rounded-full bg-slate-200 hover:opacity-80 transition-opacity object-cover" />
-        </Link>
+    <article className={`flex bg-white ${!isDetail ? 'border-b border-slate-200 hover:bg-slate-50 transition-colors' : 'rounded-2xl border border-slate-200 shadow-sm'}`}>
+      
+      {/* Left side: Vertical Voting (Reddit style) */}
+      <div className="flex flex-col items-center shrink-0 w-12 bg-slate-50/50 py-3 border-r border-slate-100/50 rounded-l-2xl">
+        <button 
+          onClick={(e) => handleVote(e, 'up')} 
+          className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${localVote === 'up' ? 'text-orange-500' : 'text-slate-400 hover:text-orange-500'}`}
+        >
+          <ArrowUp size={22} strokeWidth={localVote === 'up' ? 3 : 2} />
+        </button>
+        <span className={`text-[13px] font-bold py-1 ${localVote === 'up' ? 'text-orange-600' : localVote === 'down' ? 'text-blue-600' : 'text-slate-700'}`}>
+          {localScore >= 1000 ? (localScore/1000).toFixed(1)+'k' : localScore}
+        </span>
+        <button 
+          onClick={(e) => handleVote(e, 'down')} 
+          className={`p-1.5 rounded hover:bg-slate-200 transition-colors ${localVote === 'down' ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'}`}
+        >
+          <ArrowDown size={22} strokeWidth={localVote === 'down' ? 3 : 2} />
+        </button>
       </div>
 
-      {/* Right side: Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1.5 overflow-hidden text-[15px]">
-            <Link to={`/user/${post.author?._id}`} className="font-bold text-slate-900 truncate hover:underline">
-              {authorName}
+      {/* Right side: Content Area */}
+      <div className="flex-1 min-w-0 p-3 pt-3.5 pl-4 pr-5">
+        
+        {/* Header: Org Name and Author */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center flex-wrap gap-1.5 text-xs font-medium text-slate-500">
+            {post.organization ? (
+              <Link to={`/org/${post.organization.slug || post.organization._id}`} className="font-bold text-slate-900 hover:underline flex items-center gap-1.5">
+                {post.organization.avatarImage ? (
+                   <img src={post.organization.avatarImage} className="w-5 h-5 rounded-full object-cover border border-slate-200" alt=""/>
+                ) : (
+                   <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-[10px] text-orange-600 font-bold border border-orange-200">{post.organization.name[0]}</div>
+                )}
+                c/{post.organization.slug || post.organization.name}
+              </Link>
+            ) : (
+              <span className="font-bold text-slate-900">c/Global</span>
+            )}
+            
+            <span className="text-slate-300">•</span>
+            
+            <span className="text-slate-500">Posted by</span>
+            <Link to={`/user/${post.author?._id}`} className="text-slate-500 hover:underline flex items-center gap-1">
+              <img src={authorImage} alt="" className="w-4 h-4 rounded-full object-cover" />
+              u/{authorName}
             </Link>
-            <span className="text-slate-500 truncate">@{authorName}</span>
-            <span className="text-slate-500">·</span>
-            <span className="text-slate-500 text-sm hover:underline">
+            
+            <span className="text-slate-300">•</span>
+            <span className="hover:underline cursor-pointer">
               {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </span>
           </div>
 
+          {/* TrustShield Status Badge */}
           {post.status === 'APPROVED' ? (
-            <div className="flex items-center gap-1 text-green-600 text-xs font-bold shrink-0">
-              <ShieldCheck size={14} /> Safe
+            <div className="flex items-center gap-1 text-green-600 text-[11px] font-bold shrink-0 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+              <ShieldCheck size={12} /> Safe
             </div>
           ) : post.status === 'PENDING' ? (
-            <div className="flex items-center gap-1 text-yellow-600 text-xs font-bold shrink-0 bg-yellow-50 px-2 py-0.5 rounded-full">
-              <ShieldAlert size={14} /> Scanning
+            <div className="flex items-center gap-1 text-yellow-600 text-[11px] font-bold shrink-0 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-100">
+              <ShieldAlert size={12} /> Scanning
             </div>
           ) : (
-            <div className="flex items-center gap-1 text-red-600 text-xs font-bold shrink-0">
-              <ShieldAlert size={14} /> Flagged
+            <div className="flex items-center gap-1 text-red-600 text-[11px] font-bold shrink-0 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+              <ShieldAlert size={12} /> Flagged
             </div>
           )}
         </div>
 
-        {post.organization && (
-          <div className="text-xs text-slate-500 mb-2">
-            Posted in <Link to={`/org/${post.organization.slug || post.organization._id}`} className="font-bold text-orange-600 hover:underline">c/{post.organization.name}</Link>
-          </div>
-        )}
-
+        {/* Content Body */}
         {isDetail ? (
-          <p className="text-slate-900 text-[17px] leading-normal mb-3 whitespace-pre-wrap break-words">{post.content}</p>
+          <h1 className="text-xl font-bold text-slate-900 mb-2 leading-tight">{post.content}</h1>
         ) : (
           <Link to={`/community/post/${post._id}`}>
-            <p className="text-slate-900 text-[15px] leading-normal mb-3 whitespace-pre-wrap break-words">{post.content}</p>
+            <h2 className="text-[16px] font-semibold text-slate-900 mb-2 hover:underline leading-snug">{post.content}</h2>
           </Link>
         )}
 
-        <div className="flex items-center justify-between text-slate-500 mt-2 max-w-md">
-          {/* Comments */}
-          <Link to={`/community/post/${post._id}`} className="flex items-center gap-2 group hover:text-blue-500 transition-colors">
-            <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors">
-              <MessageCircle size={18} />
-            </div>
-            <span className="text-sm">{post.commentCount || 0}</span>
+        {/* Media Grid */}
+        {post.media && post.media.length > 0 && (
+          <div className="mb-3 rounded-xl overflow-hidden border border-slate-200">
+            {post.media.map((url: string, idx: number) => (
+              <img key={idx} src={url} alt="Post media" className="w-full h-auto max-h-[500px] object-cover" />
+            ))}
+          </div>
+        )}
+
+        {/* Tags / Flairs */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.tags.map((tag: string, idx: number) => (
+              <span key={idx} className="bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-1 rounded-md border border-slate-200/60">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Action Footer */}
+        <div className="flex items-center gap-1 text-slate-500 font-semibold text-[13px] mt-1 -ml-2">
+          <Link to={`/community/post/${post._id}`} className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-slate-100 transition-colors">
+            <MessageCircle size={18} className="text-slate-400" />
+            <span>{post.commentCount || 0} Comments</span>
           </Link>
           
-          {/* Upvote / Downvote */}
-          <div className="flex items-center gap-1">
-            <button onClick={handleUpvote} className="p-2 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <ArrowUp size={18} />
-            </button>
-            <span className={`text-sm font-bold min-w-[20px] text-center ${netVotes > 0 ? 'text-orange-500' : netVotes < 0 ? 'text-blue-500' : ''}`}>
-              {netVotes}
-            </span>
-            <button onClick={handleDownvote} className="p-2 rounded-full hover:bg-blue-50 hover:text-blue-500 transition-colors">
-              <ArrowDown size={18} />
-            </button>
-          </div>
-
-          <button className="flex items-center gap-2 group hover:text-green-500 transition-colors">
-            <div className="p-2 rounded-full group-hover:bg-green-50 transition-colors">
-              <Share2 size={18} />
-            </div>
+          <button className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-slate-100 transition-colors">
+            <Share2 size={18} className="text-slate-400" />
+            <span>Share</span>
+          </button>
+          
+          <button className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-slate-100 transition-colors ml-auto">
+            <Flag size={16} className="text-slate-400" />
+            <span className="hidden sm:inline">Report</span>
           </button>
         </div>
+
       </div>
     </article>
   );

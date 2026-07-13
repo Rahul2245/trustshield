@@ -74,16 +74,16 @@ export const OrgDetailPage: React.FC = () => {
       </div>
 
       <div className="relative">
-        <div className="h-48 bg-gradient-to-r from-orange-400 to-orange-600 relative overflow-hidden">
+        <div className="h-48 bg-gradient-to-r from-orange-400 via-orange-500 to-rose-500 relative overflow-hidden group">
           {org.bannerImage && (
-            <img src={org.bannerImage} alt="" className="w-full h-full object-cover mix-blend-overlay opacity-50" />
+            <img src={org.bannerImage} alt="" className="w-full h-full object-cover mix-blend-overlay opacity-60" />
           )}
         </div>
         
-        <div className="px-4 pb-4 bg-white relative">
+        <div className="px-5 pb-4 bg-white relative">
           <div className="flex justify-between items-start">
-            <div className="w-24 h-24 rounded-full bg-white p-1 border border-slate-200 shadow-sm relative -top-12">
-              <div className="w-full h-full rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-4xl overflow-hidden">
+            <div className="w-24 h-24 rounded-2xl bg-white p-1.5 border border-slate-100 shadow-sm relative -top-12">
+              <div className="w-full h-full rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-4xl overflow-hidden">
                 {org.avatarImage ? <img src={org.avatarImage} alt="" className="w-full h-full object-cover" /> : org.name[0]}
               </div>
             </div>

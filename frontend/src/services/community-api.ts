@@ -12,6 +12,12 @@ export const getPosts = async (page = 1, orgId?: string) => {
   return res.data;
 };
 
+export const getFeed = async (page = 1, sort = 'hot', orgId?: string) => {
+  const url = `/api/v1/posts/feed?page=${page}&sort=${sort}${orgId ? `&orgId=${orgId}` : ''}`;
+  const res = await apiClient.get(url);
+  return res.data;
+};
+
 export const getPostById = async (id: string) => {
   const res = await apiClient.get(`/api/v1/posts/${id}`);
   return res.data;
@@ -22,13 +28,8 @@ export const createPost = async (data: { content: string; organizationId?: strin
   return res.data;
 };
 
-export const upvotePost = async (id: string) => {
-  const res = await apiClient.post(`/api/v1/posts/${id}/upvote`);
-  return res.data;
-};
-
-export const downvotePost = async (id: string) => {
-  const res = await apiClient.post(`/api/v1/posts/${id}/downvote`);
+export const toggleVotePost = async (id: string, type: 'up' | 'down') => {
+  const res = await apiClient.post(`/api/v1/posts/${id}/vote`, { type });
   return res.data;
 };
 
@@ -48,8 +49,8 @@ export const createComment = async (data: { content: string; postId: string; par
   return res.data;
 };
 
-export const likeComment = async (id: string) => {
-  const res = await apiClient.post(`/api/v1/comments/${id}/like`);
+export const toggleVoteComment = async (id: string, type: 'up' | 'down') => {
+  const res = await apiClient.post(`/api/v1/comments/${id}/vote`, { type });
   return res.data;
 };
 
@@ -70,7 +71,7 @@ export const joinOrganization = async (id: string) => {
 };
 
 export const leaveOrganization = async (id: string) => {
-  const res = await apiClient.delete(`/api/v1/organizations/${id}/leave`);
+  const res = await apiClient.post(`/api/v1/organizations/${id}/leave`);
   return res.data;
 };
 

@@ -21,7 +21,7 @@ export const LandingPage: React.FC = () => {
           <a href="#" className="hover:text-slate-900 transition-colors">Community</a>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/login" className="px-5 py-2.5 rounded-full bg-slate-200 text-sm font-medium hover:bg-slate-300 transition-colors">
+          <Link to="/contact" className="px-5 py-2.5 rounded-full bg-slate-200 text-sm font-medium hover:bg-slate-300 transition-colors">
             Contact us
           </Link>
           <Link to="/community" className="px-5 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30">

@@ -48,7 +48,7 @@ export const LeftSidebar: React.FC = () => {
         Post
       </button>
 
-      {user && (
+      {user ? (
         <Link to="/profile" className="flex items-center gap-3 mt-auto p-3 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
           <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} alt="User Avatar" className="w-10 h-10 rounded-full bg-slate-200" />
           <div className="flex flex-col flex-1 truncate">
@@ -56,6 +56,15 @@ export const LeftSidebar: React.FC = () => {
             <span className="text-slate-500 text-sm truncate">@{user.email.split('@')[0]}</span>
           </div>
         </Link>
+      ) : (
+        <div className="mt-auto flex flex-col gap-3 p-3">
+          <Link to="/login" className="w-full py-3 bg-slate-900 text-white text-center rounded-full font-bold text-[15px] hover:bg-slate-800 transition-colors shadow-sm">
+            Log in
+          </Link>
+          <Link to="/register" className="w-full py-3 bg-white text-slate-900 text-center border-2 border-slate-200 rounded-full font-bold text-[15px] hover:bg-slate-50 transition-colors">
+            Sign up
+          </Link>
+        </div>
       )}
     </aside>
   );

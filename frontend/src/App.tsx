@@ -23,6 +23,7 @@ import { UserRegisterPage } from "@/pages/auth/UserRegisterPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AlertDetailPage } from "@/pages/AlertDetailPage";
+import { ContactUsPage } from "@/pages/ContactUsPage";
 import { useAuthStore } from "@/store/auth";
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/login" element={<UserLoginPage />} />
         <Route path="/register" element={<UserRegisterPage />} />
+        <Route path="/contact" element={<ContactUsPage />} />
         <Route path="/admin/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />

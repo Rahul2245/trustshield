@@ -41,7 +41,10 @@ const CommentSchema = new mongoose_1.Schema({
     post: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Post', required: true },
     parentComment: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Comment', default: null },
     depth: { type: Number, default: 0, max: 5 },
-    likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    upvotes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    downvotes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    score: { type: Number, default: 0 },
+    isEdited: { type: Boolean, default: false },
     threatScore: { type: Number, default: 0 },
     isFlagged: { type: Boolean, default: false },
     status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' },
@@ -52,5 +55,6 @@ const CommentSchema = new mongoose_1.Schema({
 CommentSchema.index({ post: 1, createdAt: 1 });
 CommentSchema.index({ post: 1, parentComment: 1 });
 CommentSchema.index({ status: 1 });
+CommentSchema.index({ score: -1, createdAt: -1 });
 exports.CommentModel = mongoose_1.default.model('Comment', CommentSchema);
 //# sourceMappingURL=comment.model.js.map

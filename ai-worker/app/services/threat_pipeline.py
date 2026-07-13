@@ -99,6 +99,19 @@ class ThreatPipeline:
             risk_score=fusion_result.risk_score,
             action=fusion_result.decision,
             timestamp=created_at,
+            # Attach the full document so the gateway can persist it to
+            # security_event_logs if this worker's MongoDB write failed.
+            threat_document={
+                "input": event.model_dump(mode="json"),
+                "prediction": {
+                    "nlp": nlp_prediction.model_dump(),
+                    "isolation_forest": if_prediction.model_dump(),
+                    "fusion": fusion_result.model_dump(),
+                    "shadow": shadow_result.model_dump(),
+                },
+                "threat_matrix": matrix.model_dump(mode="json"),
+                "created_at": created_at.isoformat(),
+            },
         )
         webhook_dispatched = await webhook_service.dispatch(webhook_payload)
 

@@ -13,6 +13,10 @@ const webhookSchema = zod_1.z.object({
     risk_score: zod_1.z.number(),
     action: zod_1.z.enum(["ALLOW", "MONITOR", "SHADOW", "BLOCK"]),
     timestamp: zod_1.z.string(),
+    // Full threat document from AI worker — used for guaranteed fallback
+    // persistence into security_event_logs if the AI worker's own
+    // MongoDB write failed silently.
+    threat_document: zod_1.z.record(zod_1.z.string(), zod_1.z.unknown()).optional(),
 });
 class WebhookController {
     adminService;

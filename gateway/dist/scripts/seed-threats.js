@@ -50,7 +50,7 @@ async function seedThreats() {
         process.exit(1);
     }
     await mongoose_1.default.connect(mongoUri, {
-        dbName: process.env.DATABASE_NAME || "trust_db",
+        dbName: process.env.DATABASE_NAME || "trustshield",
     });
     console.log("Clearing existing threats and alerts...");
     await security_event_log_model_1.SecurityEventLogModel.deleteMany({});

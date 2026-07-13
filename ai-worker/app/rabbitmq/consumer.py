@@ -47,28 +47,8 @@ class ThreatEventConsumer:
         if rabbitmq.channel is None:
             raise RuntimeError("RabbitMQ channel is not initialized.")
 
-        # Declare Dead Letter Exchange and Queue
-        dlx_exchange = await rabbitmq.channel.declare_exchange(
-            f"{settings.EXCHANGE_NAME}.dlx",
-            type="topic",
-            durable=True,
-        )
-        dlq_queue = await rabbitmq.channel.declare_queue(
-            settings.DLQ_QUEUE_NAME,
-            durable=True,
-        )
-        await dlq_queue.bind(dlx_exchange, routing_key="#")
-
-        # Declare Main Queue
-        queue = await rabbitmq.channel.declare_queue(
-            settings.QUEUE_NAME,
-            durable=True,
-            arguments={
-                "x-dead-letter-exchange": dlx_exchange.name,
-                "x-dead-letter-routing-key": settings.DLQ_QUEUE_NAME,
-            },
-        )
-        logger.info("Started consuming RabbitMQ queue '%s'. DLQ bound to '%s'.", settings.QUEUE_NAME, dlx_exchange.name)
+        queue = await rabbitmq.channel.get_queue(settings.QUEUE_NAME)
+        logger.info("Started consuming RabbitMQ queue '%s'.", settings.QUEUE_NAME)
 
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:

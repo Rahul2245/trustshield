@@ -13,6 +13,10 @@ const webhookSchema = z.object({
     risk_score: z.number(),
     action: z.enum(["ALLOW", "MONITOR", "SHADOW", "BLOCK"]),
     timestamp: z.string(),
+    // Full threat document from AI worker — used for guaranteed fallback
+    // persistence into security_event_logs if the AI worker's own
+    // MongoDB write failed silently.
+    threat_document: z.record(z.string(), z.unknown()).optional(),
 });
 
 export class WebhookController {

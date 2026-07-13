@@ -43,6 +43,7 @@ const PostSchema = new mongoose_1.Schema({
     media: [{ type: String }],
     upvotes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
     downvotes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    score: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
     threatScore: { type: Number, default: 0 },
     isFlagged: { type: Boolean, default: false },
@@ -56,5 +57,6 @@ const PostSchema = new mongoose_1.Schema({
 PostSchema.index({ author: 1, createdAt: -1 });
 PostSchema.index({ status: 1 });
 PostSchema.index({ organization: 1, status: 1 });
+PostSchema.index({ score: -1, createdAt: -1 });
 exports.PostModel = mongoose_1.default.model('Post', PostSchema);
 //# sourceMappingURL=post.model.js.map

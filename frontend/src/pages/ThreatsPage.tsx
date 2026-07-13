@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Calendar, ChevronDown, ChevronRight, Download, CheckCircle2, Shield, Brain, Zap } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronRight, Download, CheckCircle2, Shield, Brain, Zap, RefreshCw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getActionColor, formatRiskScore, cn } from "@/lib/utils";
 import { getThreats } from "@/services/api";
+import { onThreatAlert } from "@/services/socket";
 import type { ThreatLog } from "@/types";
 
 export function ThreatsPage() {
@@ -19,7 +20,7 @@ export function ThreatsPage() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  const loadThreats = () => {
     setLoading(true);
     getThreats({
       page: 1,
@@ -29,6 +30,25 @@ export function ThreatsPage() {
     })
       .then((data) => setThreats(data.items))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadThreats();
+  }, [search, actionFilter]);
+
+  // 🔴 REAL-TIME: Listen for new threat events via Socket.IO and refresh the list
+  useEffect(() => {
+    const unsubscribe = onThreatAlert(() => {
+      getThreats({
+        page: 1,
+        limit: 50,
+        search: search || undefined,
+        action: actionFilter || undefined,
+      })
+        .then((data) => setThreats(data.items))
+        .catch(() => {});
+    });
+    return () => unsubscribe();
   }, [search, actionFilter]);
 
   const toggleExpand = (id: string) => {
@@ -76,11 +96,17 @@ export function ThreatsPage() {
 
   return (
     <div className="space-y-6 relative pb-20">
-      <div>
-        <h1 className="text-3xl font-bold text-primary">Unified Threat Matrix</h1>
-        <p className="mt-1 text-muted">
-          Deep-dive logs from the AI computational engine.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-primary">Unified Threat Matrix</h1>
+          <p className="mt-1 text-muted">
+            Deep-dive logs from the AI computational engine.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={loadThreats} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
       {/* Interactive Filters */}

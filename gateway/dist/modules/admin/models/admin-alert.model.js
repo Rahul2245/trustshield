@@ -41,7 +41,7 @@ const AdminAlertSchema = new mongoose_1.Schema({
     correlationId: { type: String, required: true, index: true },
     type: {
         type: String,
-        enum: ["RATE_LIMIT", "AI_THREAT", "BLOCK", "SHADOW"],
+        enum: ["RATE_LIMIT", "AI_THREAT", "BLOCK", "SHADOW", "USER_REPORT"],
         required: true,
     },
     severity: {

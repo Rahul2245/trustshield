@@ -127,7 +127,20 @@ class AdminRepository {
         else if (alert.email) {
             targetUser = await user_model_1.UserModel.findOne({ email: alert.email }).select("-password").lean().exec();
         }
-        return { ...alert, auditLogs, targetUser };
+        let targetPost = null;
+        let reporterUser = null;
+        if (alert.eventId) {
+            const { PostModel } = require("../../posts/models/post.model");
+            targetPost = await PostModel.findById(alert.eventId).populate('author', 'email avatar').lean().exec();
+            if (!targetPost) {
+                const { CommentModel } = require("../../comments/models/comment.model");
+                targetPost = await CommentModel.findById(alert.eventId).populate('author', 'email avatar').lean().exec();
+            }
+        }
+        if (alert.type === "USER_REPORT" && alert.metadata && alert.metadata.reporterId) {
+            reporterUser = await user_model_1.UserModel.findById(alert.metadata.reporterId).select("email avatar").lean().exec();
+        }
+        return { ...alert, auditLogs, targetUser, targetPost, reporterUser };
     }
     async acknowledgeAlert(alertId, userId, payload) {
         return admin_alert_model_1.AdminAlertModel.findOneAndUpdate({ alertId, $or: [{ lockedByAdminId: userId }, { lockedByAdminId: { $exists: false } }, { lockedByAdminId: null }] }, {

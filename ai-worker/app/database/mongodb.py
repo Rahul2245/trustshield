@@ -76,23 +76,23 @@ class MongoDBManager:
             raise RuntimeError("MongoDB database is not initialized.")
 
         collection = self._database[settings.SECURITY_LOG_COLLECTION]
-        await collection.create_index(
-            [("input.origin_ip", 1), ("created_at", -1)],
-            name="origin_ip_created_idx",
-            background=True,
-        )
-        await collection.create_index(
-            [("threat_matrix.event_id", 1)],
-            name="event_id_idx",
-            unique=False,
-            background=True,
-        )
-        await collection.create_index(
-            [("threat_matrix.correlation_id", 1), ("created_at", -1)],
-            name="correlation_created_idx",
-            background=True,
-        )
-        logger.info("MongoDB indexes ensured for '%s'.", settings.SECURITY_LOG_COLLECTION)
+        try:
+            await collection.create_index(
+                [("input.origin_ip", 1), ("created_at", -1)],
+                background=True,
+            )
+            await collection.create_index(
+                [("threat_matrix.event_id", 1)],
+                unique=False,
+                background=True,
+            )
+            await collection.create_index(
+                [("threat_matrix.correlation_id", 1), ("created_at", -1)],
+                background=True,
+            )
+            logger.info("MongoDB indexes ensured for '%s'.", settings.SECURITY_LOG_COLLECTION)
+        except Exception as e:
+            logger.warning("Skipping index creation (likely exists with different name from Gateway): %s", e)
 
     async def disconnect(self) -> None:
         """

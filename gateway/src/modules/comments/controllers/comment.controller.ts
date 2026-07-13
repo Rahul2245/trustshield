@@ -95,17 +95,15 @@ export class CommentController {
             aiVerdict: action === 'BLOCK' || action === 'SHADOW',
           });
 
-          if (action !== 'ALLOW') {
-            await adminService.processAiWebhook({
-              event_id: comment._id.toString(),
-              event_type: 'new_comment',
-              correlation_id: correlationId,
-              user_id: userId,
-              risk_score: riskScore,
-              action,
-              timestamp: new Date().toISOString(),
-            });
-          }
+          await adminService.processAiWebhook({
+            event_id: comment._id.toString(),
+            event_type: 'NEW_COMMENT',
+            correlation_id: correlationId,
+            user_id: userId,
+            risk_score: riskScore,
+            action,
+            timestamp: new Date().toISOString(),
+          });
         } catch (err) {
           logger.error(err as Error, `Heuristic analysis failed for comment ${comment._id}`);
         }

@@ -41,6 +41,7 @@ const OrganizationSchema = new mongoose_1.Schema({
     description: { type: String, required: true },
     ownerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     members: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    moderators: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
     bannerImage: { type: String, default: null },
     avatarImage: { type: String, default: null },
     rules: [{ type: String }],

@@ -13,7 +13,7 @@ export interface ThreatAlertPayload {
     alertId: string;
     eventId?: string;
     correlationId: string;
-    type: "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW";
+    type: "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW" | "USER_REPORT";
     severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
     userId?: string;
     email?: string;

@@ -87,17 +87,15 @@ class CommentController {
                         threatScore: riskScore,
                         aiVerdict: action === 'BLOCK' || action === 'SHADOW',
                     });
-                    if (action !== 'ALLOW') {
-                        await adminService.processAiWebhook({
-                            event_id: comment._id.toString(),
-                            event_type: 'new_comment',
-                            correlation_id: correlationId,
-                            user_id: userId,
-                            risk_score: riskScore,
-                            action,
-                            timestamp: new Date().toISOString(),
-                        });
-                    }
+                    await adminService.processAiWebhook({
+                        event_id: comment._id.toString(),
+                        event_type: 'NEW_COMMENT',
+                        correlation_id: correlationId,
+                        user_id: userId,
+                        risk_score: riskScore,
+                        action,
+                        timestamp: new Date().toISOString(),
+                    });
                 }
                 catch (err) {
                     logger_1.logger.error(err, `Heuristic analysis failed for comment ${comment._id}`);
@@ -155,13 +153,18 @@ class CommentController {
         }
     };
     // ─────────────────────────────────────────────────────────────
-    // LIKE COMMENT
+    // TOGGLE VOTE
     // ─────────────────────────────────────────────────────────────
-    likeComment = async (req, res, next) => {
+    toggleVote = async (req, res, next) => {
         try {
             const userId = req.user?.id || req.body.userId;
             if (!userId) {
                 res.status(401).json({ success: false, message: 'Authentication required' });
+                return;
+            }
+            const { type } = req.body; // 'up' or 'down'
+            if (type !== 'up' && type !== 'down') {
+                res.status(400).json({ success: false, message: 'Invalid vote type. Use "up" or "down".' });
                 return;
             }
             const comment = await comment_model_1.CommentModel.findById(req.params.id);
@@ -170,17 +173,29 @@ class CommentController {
                 return;
             }
             const userObjId = new mongoose_1.default.Types.ObjectId(userId);
-            const alreadyLiked = comment.likes.some(id => id.equals(userObjId));
-            if (alreadyLiked) {
-                comment.likes = comment.likes.filter(id => !id.equals(userObjId));
+            const hasUpvoted = comment.upvotes.some(id => id.equals(userObjId));
+            const hasDownvoted = comment.downvotes.some(id => id.equals(userObjId));
+            comment.upvotes = comment.upvotes.filter(id => !id.equals(userObjId));
+            comment.downvotes = comment.downvotes.filter(id => !id.equals(userObjId));
+            let currentVote = null;
+            if (type === 'up' && !hasUpvoted) {
+                comment.upvotes.push(userObjId);
+                currentVote = 'up';
             }
-            else {
-                comment.likes.push(userObjId);
+            else if (type === 'down' && !hasDownvoted) {
+                comment.downvotes.push(userObjId);
+                currentVote = 'down';
             }
+            comment.score = comment.upvotes.length - comment.downvotes.length;
             await comment.save();
             res.status(200).json({
                 success: true,
-                data: { likes: comment.likes.length, liked: !alreadyLiked }
+                data: {
+                    upvotes: comment.upvotes.length,
+                    downvotes: comment.downvotes.length,
+                    score: comment.score,
+                    voted: currentVote
+                }
             });
         }
         catch (error) {

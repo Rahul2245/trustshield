@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Dict, Literal, Optional
 
 from pydantic import (
     AwareDatetime,
@@ -54,4 +54,12 @@ class WebhookPayload(BaseModel):
     timestamp: AwareDatetime = Field(
         ...,
         description="Timezone-aware timestamp of the webhook dispatch.",
+    )
+
+    # Full threat document included so the gateway can write it to
+    # security_event_logs as a guaranteed fallback if the AI worker's
+    # own MongoDB write failed silently.
+    threat_document: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Full security_event_log document for gateway-side persistence fallback.",
     )

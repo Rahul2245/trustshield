@@ -98,17 +98,15 @@ export class PostController {
             aiVerdict: action === 'BLOCK' || action === 'SHADOW',
           });
 
-          if (action !== 'ALLOW') {
-            await adminService.processAiWebhook({
-              event_id: post._id.toString(),
-              event_type: 'new_post',
-              correlation_id: correlationId,
-              user_id: userId,
-              risk_score: riskScore,
-              action,
-              timestamp: new Date().toISOString(),
-            });
-          }
+          await adminService.processAiWebhook({
+            event_id: post._id.toString(),
+            event_type: 'NEW_POST',
+            correlation_id: correlationId,
+            user_id: userId,
+            risk_score: riskScore,
+            action,
+            timestamp: new Date().toISOString(),
+          });
         } catch (err) {
           logger.error(err as Error, `Heuristic analysis failed for post ${post._id}`);
         }
@@ -506,7 +504,7 @@ export class PostController {
         }
       ];
 
-      const topics = await PostModel.aggregate(pipeline);
+      const topics = await PostModel.aggregate(pipeline as any[]);
 
       res.status(200).json({
         success: true,

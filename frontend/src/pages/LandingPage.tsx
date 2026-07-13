@@ -15,10 +15,10 @@ export const LandingPage: React.FC = () => {
           <span className="text-xl font-semibold tracking-tight">EchoSphere</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="#" className="hover:text-slate-900 transition-colors">Home</a>
-          <a href="#" className="hover:text-slate-900 transition-colors">About</a>
+          <Link to="/" className="hover:text-slate-900 transition-colors">Home</Link>
+          <Link to="/about" className="hover:text-slate-900 transition-colors">About</Link>
           <a href="#" className="hover:text-slate-900 transition-colors">Reviews</a>
-          <a href="#" className="hover:text-slate-900 transition-colors">Community</a>
+          <Link to="/community" className="hover:text-slate-900 transition-colors">Community</Link>
         </div>
         <div className="flex items-center gap-4">
           <Link to="/contact" className="px-5 py-2.5 rounded-full bg-slate-200 text-sm font-medium hover:bg-slate-300 transition-colors">

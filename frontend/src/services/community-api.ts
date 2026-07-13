@@ -12,9 +12,16 @@ export const getPosts = async (page = 1, orgId?: string) => {
   return res.data;
 };
 
-export const getFeed = async (page = 1, sort = 'hot', orgId?: string) => {
-  const url = `/api/v1/posts/feed?page=${page}&sort=${sort}${orgId ? `&orgId=${orgId}` : ''}`;
+export const getFeed = async (page = 1, sort = 'hot', orgId?: string, topic?: string) => {
+  let url = `/api/v1/posts/feed?page=${page}&sort=${sort}`;
+  if (orgId) url += `&orgId=${orgId}`;
+  if (topic) url += `&topic=${encodeURIComponent(topic)}`;
   const res = await apiClient.get(url);
+  return res.data;
+};
+
+export const getTrendingTopics = async () => {
+  const res = await apiClient.get('/api/v1/posts/trending-topics');
   return res.data;
 };
 
@@ -33,8 +40,10 @@ export const toggleVotePost = async (id: string, type: 'up' | 'down') => {
   return res.data;
 };
 
-export const getMyPosts = async (page = 1) => {
-  const res = await apiClient.get(`/api/v1/posts/user/my-posts?page=${page}`);
+export const getMyPosts = async (page = 1, orgId?: string) => {
+  let url = `/api/v1/posts/user/my-posts?page=${page}`;
+  if (orgId) url += `&orgId=${orgId}`;
+  const res = await apiClient.get(url);
   return res.data;
 };
 

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getOrganizations } from "@/services/community-api";
+import { getOrganizations, getTrendingTopics } from "@/services/community-api";
 
 export const RightSidebar: React.FC = () => {
   const [orgs, setOrgs] = useState<any[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
 
   useEffect(() => {
     getOrganizations(1).then(res => setOrgs(res.data.items.slice(0, 3))).catch(() => {});
+    getTrendingTopics().then(res => setTrending(res.data)).catch(() => {});
   }, []);
 
   return (
@@ -24,13 +26,14 @@ export const RightSidebar: React.FC = () => {
       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6">
         <h2 className="text-[19px] font-extrabold text-slate-900 mb-3 px-2">Trending Topics</h2>
         <div className="flex flex-col">
-          {["#CyberSecurity", "#AI_Safety", "#TrustAndSafety", "#Moderation", "#Web3"].map((topic, i) => (
-            <Link key={i} to={`/search?q=${topic.replace('#', '')}`} className="px-2 py-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex flex-col">
+          {trending.map((topicItem, i) => (
+            <Link key={i} to={`/community?topic=${encodeURIComponent(topicItem.topic)}`} className="px-2 py-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer flex flex-col">
               <span className="text-slate-500 text-xs font-medium">Trending Worldwide</span>
-              <span className="font-bold text-slate-900 text-[15px]">{topic}</span>
-              <span className="text-slate-500 text-xs">{Math.floor(Math.random() * 10) + 1}k posts</span>
+              <span className="font-bold text-slate-900 text-[15px]">{topicItem.topic}</span>
+              <span className="text-slate-500 text-xs">{topicItem.count} posts</span>
             </Link>
           ))}
+          {trending.length === 0 && <p className="text-slate-500 text-sm px-2">No trending topics right now.</p>}
         </div>
       </div>
 

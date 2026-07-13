@@ -7,6 +7,7 @@ const router = Router();
 // Public routes
 router.get('/', postController.getPosts);
 router.get('/feed', postController.getFeed);
+router.get('/trending-topics', postController.getTrendingTopics);
 router.get('/:id', postController.getPostById);
 
 // Authenticated routes

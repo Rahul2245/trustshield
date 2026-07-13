@@ -130,6 +130,16 @@ export class AdminService {
                 await UserModel.findByIdAndUpdate(alert.userId, updateQuery);
             }
             
+            // Auto-approve the associated post/comment if user is set to ACTIVE or decision indicates safe
+            const isSafeDecision = payload.decision && /safe|false positive|handled|approve|ignore/i.test(payload.decision);
+            if (payload.userStatus === "ACTIVE" || isSafeDecision) {
+                const { PostModel } = require("../../posts/models/post.model");
+                const { CommentModel } = require("../../comments/models/comment.model");
+                
+                await PostModel.findByIdAndUpdate(alert.eventId, { status: 'APPROVED', isFlagged: false });
+                await CommentModel.findByIdAndUpdate(alert.eventId, { status: 'APPROVED', isFlagged: false });
+            }
+            
             await AuditLogModel.create({
                 eventType: "ALERT_ACKNOWLEDGED",
                 severity: "INFO",

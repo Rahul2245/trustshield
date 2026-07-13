@@ -18,6 +18,7 @@ import { PostDetailPage } from "@/pages/PostDetailPage";
 import { OrganizationsPage } from "@/pages/OrganizationsPage";
 import { OrgDetailPage } from "@/pages/OrgDetailPage";
 import { SearchPage } from "@/pages/SearchPage";
+import { ExplorePage } from "@/pages/ExplorePage";
 import { UserLoginPage } from "@/pages/auth/UserLoginPage";
 import { UserRegisterPage } from "@/pages/auth/UserRegisterPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/community/post/:postId" element={<PostDetailPage />} />
         <Route path="/organizations" element={<OrganizationsPage />} />
         <Route path="/org/:orgId" element={<OrgDetailPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/about" element={<AboutUsPage />} />

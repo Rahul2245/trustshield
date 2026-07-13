@@ -6,6 +6,7 @@ import { rabbitMQClient } from '../../../infrastructure/rabbitmq/connection';
 import { logger } from '../../../infrastructure/logger/logger';
 import { AdminService } from '../../admin/services/admin.service';
 import { UserModel } from '../../users/models/user.model';
+import { OrganizationModel } from '../../organizations/models/organization.model';
 import { AppError } from '../../../core/errors/AppError';
 
 const adminService = new AdminService();
@@ -18,9 +19,25 @@ export class PostController {
   public createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await UserModel.findById(req.user?.id || req.body.authorId);
-      if (user?.isUnderInvestigation) {
+      if (!user) {
+          throw new AppError("User not found or unauthenticated.", 401, "UNAUTHORIZED");
+      }
+      if (user.isUnderInvestigation) {
           throw new AppError("Your account is under investigation for suspicious activity. You cannot post.", 403, "FORBIDDEN");
       }
+      if (req.body.organizationId) {
+          const org = await OrganizationModel.findById(req.body.organizationId);
+          if (!org) {
+              throw new AppError("Community not found.", 404, "NOT_FOUND");
+          }
+          const isMember = org.members.some(id => id.toString() === user._id.toString());
+          const isOwner = org.ownerId.toString() === user._id.toString();
+          
+          if (!isMember && !isOwner) {
+              throw new AppError("You must join this community before posting in it.", 403, "FORBIDDEN");
+          }
+      }
+
       const post = new PostModel({
         content: req.body.content,
         author: req.user?.id || req.body.authorId,
@@ -249,13 +266,22 @@ export class PostController {
       const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
       const skip = (page - 1) * limit;
 
+      const query: any = { author: userId };
+      if (req.query.orgId) {
+        if (req.query.orgId === 'global') {
+          query.organization = null;
+        } else {
+          query.organization = req.query.orgId;
+        }
+      }
+
       const [posts, total] = await Promise.all([
-        PostModel.find({ author: userId })
+        PostModel.find(query)
           .populate('organization', 'name slug avatarImage')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        PostModel.countDocuments({ author: userId })
+        PostModel.countDocuments(query)
       ]);
 
       res.status(200).json({
@@ -278,7 +304,17 @@ export class PostController {
       const sortType = (req.query.sort as string) || 'hot'; // 'hot', 'new', 'top'
 
       const query: Record<string, unknown> = { status: 'APPROVED' };
-      if (req.query.orgId) query.organization = req.query.orgId;
+      if (req.query.orgId) {
+        if (req.query.orgId === 'global') {
+          query.organization = null;
+        } else {
+          query.organization = req.query.orgId;
+        }
+      }
+      
+      if (req.query.topic) {
+        query.$text = { $search: req.query.topic as string };
+      }
 
       let sortObj: any = { createdAt: -1 };
       if (sortType === 'top') {
@@ -365,6 +401,101 @@ export class PostController {
           score: post.score,
           voted: currentVote 
         }
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // GET TRENDING TOPICS
+  // ─────────────────────────────────────────────────────────────
+  public getTrendingTopics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const pipeline = [
+        // 1. Filter posts in the last 7 days
+        {
+          $match: {
+            createdAt: { $gte: sevenDaysAgo }
+          }
+        },
+        // 2. Extract words starting with '#' or tags
+        {
+          $project: {
+            tags: 1,
+            hashtags: {
+              $regexFindAll: {
+                input: "$content",
+                regex: /#[a-zA-Z0-9_]+/
+              }
+            }
+          }
+        },
+        // 3. Map hashtags regex match to string array and merge with tags
+        {
+          $project: {
+            allTopics: {
+              $concatArrays: [
+                { $ifNull: ["$tags", []] },
+                {
+                  $map: {
+                    input: "$hashtags",
+                    as: "match",
+                    in: "$$match.match"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        // 4. Unwind to process each topic separately
+        { $unwind: "$allTopics" },
+        // 5. Normalize topic (remove leading # and lowercase, then add # back for consistency)
+        {
+          $project: {
+            topic: {
+              $concat: [
+                "#",
+                {
+                  $replaceAll: {
+                    input: { $toLower: "$allTopics" },
+                    find: "#",
+                    replacement: ""
+                  }
+                }
+              ]
+            }
+          }
+        },
+        // 6. Group and sum occurrences
+        {
+          $group: {
+            _id: "$topic",
+            count: { $sum: 1 }
+          }
+        },
+        // 7. Sort by highest count
+        { $sort: { count: -1 } },
+        // 8. Limit to top 10
+        { $limit: 10 },
+        // 9. Format output
+        {
+          $project: {
+            _id: 0,
+            topic: "$_id",
+            count: 1
+          }
+        }
+      ];
+
+      const topics = await PostModel.aggregate(pipeline);
+
+      res.status(200).json({
+        success: true,
+        data: topics
       });
     } catch (error) {
       next(error);

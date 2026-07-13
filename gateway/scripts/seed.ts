@@ -81,16 +81,20 @@ const generateSeedData = async () => {
     'Game Dev Hub', 'UI/UX Designers', 'Data Engineers', 'Ethical Hackers'
   ];
   
+  const orgsCreated = [];
   for (let i = 0; i < 20; i++) {
     const orgOwner = users[Math.floor(Math.random() * users.length)];
+    const slug = orgNames[i].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const org = new OrganizationModel({
       name: orgNames[i],
+      slug,
       description: `Official community for ${orgNames[i]} professionals.`,
       ownerId: orgOwner._id,
       isVerified: i < 5, // First 5 are verified
       memberCount: Math.floor(Math.random() * 5000) + 100
     });
     await org.save();
+    orgsCreated.push(org);
   }
 
   // 3. System & Audit Logs
@@ -112,13 +116,24 @@ const generateSeedData = async () => {
   for (let i = 0; i < 200; i++) {
     const author = users[Math.floor(Math.random() * users.length)];
     const isSuspicious = i % 15 === 0;
+    
+    // Pick random hashtags to create trending topics
+    const possibleTags = ["#CyberSecurity", "#AI_Safety", "#TrustAndSafety", "#Moderation", "#Web3", "#MachineLearning", "#ReactJS", "#NodeJS"];
+    const tag1 = possibleTags[Math.floor(Math.random() * possibleTags.length)];
+    const tag2 = possibleTags[Math.floor(Math.random() * possibleTags.length)];
+    const tagsStr = (i % 3 === 0) ? ` ${tag1}` : (i % 2 === 0) ? ` ${tag1} ${tag2}` : "";
+
     const content = isSuspicious 
       ? `Click here to download free hacked software! http://malicious.link/?id=${i}` 
-      : `Discussing the latest trends in technology and open source development. Topic #${i}`;
+      : `Discussing the latest trends in technology and open source development. Topic #${i}.${tagsStr}`;
+
+    // Assign to a random organization 70% of the time
+    const org = Math.random() > 0.3 ? orgsCreated[Math.floor(Math.random() * orgsCreated.length)]._id : undefined;
 
     const post = new PostModel({
       content,
       author: author._id,
+      organization: org,
       status: 'PENDING'
     });
     await post.save();

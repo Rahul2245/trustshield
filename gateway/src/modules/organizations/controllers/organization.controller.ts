@@ -119,23 +119,21 @@ export class OrganizationController {
         return;
       }
 
-      const org = await OrganizationModel.findById(req.params.id);
+      const userObjId = new mongoose.Types.ObjectId(userId);
+      const org = await OrganizationModel.findByIdAndUpdate(
+        req.params.id,
+        { $addToSet: { members: userObjId } },
+        { new: true }
+      );
+
       if (!org) {
         res.status(404).json({ success: false, message: 'Organization not found' });
         return;
       }
 
-      const userObjId = new mongoose.Types.ObjectId(userId);
-      const alreadyMember = org.members.some(id => id.equals(userObjId));
-
-      if (!alreadyMember) {
-        org.members.push(userObjId);
-        await org.save();
-      }
-
       res.status(200).json({
         success: true,
-        message: alreadyMember ? 'Already a member' : 'Joined successfully',
+        message: 'Joined successfully',
         data: { memberCount: org.members.length, isMember: true }
       });
     } catch (error) {
@@ -154,26 +152,29 @@ export class OrganizationController {
         return;
       }
 
-      const org = await OrganizationModel.findById(req.params.id);
-      if (!org) {
+      const orgCheck = await OrganizationModel.findById(req.params.id);
+      if (!orgCheck) {
         res.status(404).json({ success: false, message: 'Organization not found' });
         return;
       }
 
       // Owner cannot leave
-      if (org.ownerId.equals(new mongoose.Types.ObjectId(userId))) {
+      if (orgCheck.ownerId.equals(new mongoose.Types.ObjectId(userId))) {
         res.status(400).json({ success: false, message: 'Owner cannot leave. Transfer ownership first.' });
         return;
       }
 
       const userObjId = new mongoose.Types.ObjectId(userId);
-      org.members = org.members.filter(id => !id.equals(userObjId));
-      await org.save();
+      const org = await OrganizationModel.findByIdAndUpdate(
+        req.params.id,
+        { $pull: { members: userObjId } },
+        { new: true }
+      );
 
       res.status(200).json({
         success: true,
         message: 'Left organization',
-        data: { memberCount: org.members.length, isMember: false }
+        data: { memberCount: org?.members.length, isMember: false }
       });
     } catch (error) {
       next(error);

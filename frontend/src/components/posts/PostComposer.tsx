@@ -22,8 +22,13 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
       // Fetch orgs to populate the dropdown
       getOrganizations().then(res => {
         if (res.success) {
-          // In a real app, we might filter to just "joined" orgs
-          setMyOrgs(res.data.items);
+          // Filter to just "joined" orgs or owned orgs
+          const joinedOrgs = res.data.items.filter((org: any) => 
+            org.members?.includes(user?.id) || 
+            org.ownerId?._id === user?.id || 
+            org.ownerId === user?.id
+          );
+          setMyOrgs(joinedOrgs);
         }
       });
     }

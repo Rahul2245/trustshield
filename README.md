@@ -17,6 +17,10 @@ Built using **Node.js**, **FastAPI**, **RabbitMQ**, **Redis**, **MongoDB**, **Re
 ![React](https://img.shields.io/badge/React-Frontend-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## 🚀 Live Production Demo
+
+Experience the fully containerized TrustShield architecture live in action:
+**[https://trustshield-pi.vercel.app/](https://trustshield-pi.vercel.app/)**
 
 ## 📌 Overview
 
@@ -89,3 +93,28 @@ The following sequence diagram demonstrates how TrustShield processes authentica
 | Dashboard | React |
 | Real-time Communication | Socket.io |
 | Containerization | Docker |
+
+
+## 📖 End-to-End Walkthrough Demo
+
+Follow these steps to see how TrustShield's Event-Driven AI Pipeline analyzes user interactions and flags threats in real-time.
+
+### Step 1: Log in as a User & Post Content
+1. Go to the [Live Demo URL](https://trustshield-pi.vercel.app/).
+2. Log in with a standard user account (or register a new one).
+3. Navigate to the **Feed** or **Create Post** section.
+4. Try posting a normal message (e.g., *"Hello world, excited to join this platform!"*).
+5. Now, try posting a suspicious or malicious message simulating a phishing attack or spam (e.g., *"URGENT: Click this link to verify your bank account credentials immediately before your account gets permanently suspended!"*).
+
+### Step 2: Log in as the Admin (Trust & Safety Team)
+1. Open a new incognito window or log out of the user account.
+2. Go to the Admin Login Portal: **[https://trustshield-pi.vercel.app/admin/login](https://trustshield-pi.vercel.app/admin/login)**
+3. Log in using the seeded Admin credentials:
+   - **Email:** `super_admin@trustshield.io`
+   - **Password:** `securepassword123`
+
+### Step 3: View Real-Time Threat Alerts
+1. Upon logging into the Admin Security Console, navigate to the **Live Dashboard** or **Threats** tab.
+2. You will instantly see the suspicious post you made earlier flagged as a threat in the system.
+3. Click on the flagged alert to view the **Threat Details**. 
+4. Observe how TrustShield's asynchronous AI workers (Isolation Forest & Llama 3) have automatically attached a confidence score, threat classification, and detailed reasoning for *why* the post was flagged—all executed in the background without slowing down the end-user's posting experience!

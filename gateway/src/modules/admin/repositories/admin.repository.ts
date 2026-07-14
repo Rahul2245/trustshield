@@ -128,7 +128,9 @@ export class AdminRepository {
     }
 
     public async findAlerts(page: number, limit: number, acknowledged?: boolean) {
-        const filter: Record<string, unknown> = {};
+        const filter: Record<string, unknown> = {
+            severity: { $in: ["MEDIUM", "HIGH", "CRITICAL"] }
+        };
         if (acknowledged !== undefined) {
             filter.acknowledged = acknowledged;
         }

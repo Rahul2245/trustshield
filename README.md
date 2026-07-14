@@ -31,21 +31,27 @@ TrustShield introduces an event-driven Trust & Safety architecture that separate
 The platform performs synchronous edge validation while asynchronously executing machine learning and local large language model (LLM) analysis, enabling low-latency APIs without sacrificing advanced threat detection.
 
 
-## ✨ Features
+## 🛡️ Implemented Security Modules
 
-- Secure JWT Authentication
-- Redis Sliding Window Rate Limiting
-- Dormant Account Detection
-- Deactivated Account Protection
-- Step-up MFA Workflow
-- Event-driven Microservice Architecture
-- RabbitMQ Asynchronous Processing
-- TF-IDF + Naive Bayes Text Classification
-- Isolation Forest Bot Detection
-- Local Llama 3 Semantic Threat Analysis
-- Live Security Dashboard
-- WebSocket Real-time Alerts
-- Dockerized Deployment
+TrustShield employs a multi-layered security approach, separating fast synchronous checks from deep asynchronous AI analysis.
+
+### 1. Edge Gateway Security (Synchronous)
+These modules execute in milliseconds during the active API request lifecycle.
+- **Redis Sliding Window Rate Limiting**: Blocks high-frequency API abuse and brute-force attacks using precise time-windowed request tracking.
+- **JWT Authentication Lifecycle**: Implements secure, short-lived access tokens paired with HTTP-only refresh tokens.
+- **Account State Interception**: Instantly blocks requests from `DEACTIVATED` accounts and identifies `DORMANT` accounts (inactive for > 180 days) before granting access.
+- **Step-up MFA Workflow**: Dynamically intercepts logins from dormant accounts and forces an Email OTP Multi-Factor Authentication challenge before issuing credentials.
+
+### 2. Asynchronous Threat Detection Pipeline (Background)
+These modules execute via RabbitMQ workers, ensuring heavy ML inference never blocks the end-user.
+- **TF-IDF & Naive Bayes Classification**: High-speed Natural Language Processing (NLP) that instantly vectorizes and classifies text payloads for known spam and phishing vectors.
+- **Isolation Forest Bot Detection**: Anomaly detection algorithm that flags automated bot behavior based on structural outliers in the user's request patterns.
+- **Llama 3 Semantic Shadow Engine**: A localized Large Language Model (Ollama) that performs deep semantic reviews of borderline payloads to catch advanced social engineering and zero-day attacks.
+
+### 3. Admin Security Operations (Real-Time)
+- **WebSocket Transport Engine**: Pushes live threat event frames directly from the backend to the admin frontend without HTTP polling.
+- **Live Security Dashboard**: Provides Trust & Safety teams with immediate visibility into flagged incidents, complete with AI confidence scores, categorical tags, and deterministic reasoning.
+- **Dockerized Microservices**: Fully containerized environment ensuring environment parity and secure, isolated deployments across Gateway, AI Worker, and Frontend.
 
 
 ## 🏗️ System Architecture

@@ -30,6 +30,13 @@ TrustShield introduces an event-driven Trust & Safety architecture that separate
 
 The platform performs synchronous edge validation while asynchronously executing machine learning and local large language model (LLM) analysis, enabling low-latency APIs without sacrificing advanced threat detection.
 
+## 🌟 Key Technical Achievements
+
+- **Zero-Blocking ML Inference**: Engineered a decoupled architecture using RabbitMQ, allowing the Node.js Edge Gateway to respond to users in `<50ms` while heavy Scikit-Learn and Llama 3 workloads process asynchronously in the background.
+- **Microservices & Monorepo**: Designed a cleanly separated, domain-driven monorepo with dedicated services for the Gateway, AI Workers, and Frontend, connected via internal Docker networks.
+- **Stateful Real-Time Subscriptions**: Implemented a Socket.io transport layer that bridges the asynchronous Python backend with the React frontend, pushing live threat frames to admins instantaneously.
+- **Multi-layered Security Traps**: Built complex authentication state machines, including step-up MFA flows that trigger dynamically based on behavioral triggers (e.g., dormant account logins).
+
 
 ## 🛡️ Implemented Security Modules
 
@@ -124,3 +131,33 @@ Follow these steps to see how TrustShield's Event-Driven AI Pipeline analyzes us
 2. You will instantly see the suspicious post you made earlier flagged as a threat in the system.
 3. Click on the flagged alert to view the **Threat Details**. 
 4. Observe how TrustShield's asynchronous AI workers (Isolation Forest & Llama 3) have automatically attached a confidence score, threat classification, and detailed reasoning for *why* the post was flagged—all executed in the background without slowing down the end-user's posting experience!
+
+
+## 💻 Quick Start (Local Development)
+
+TrustShield is fully containerized and designed for easy local reproducibility. 
+
+**Prerequisites:** Docker and Docker Compose installed on your machine.
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Rahul2245/trustshield.git
+   cd trustshield
+   ```
+
+2. **Configure Environment Variables**
+   Duplicate the `.env.example` files in each service directory and add your cloud URIs (MongoDB, Upstash Redis, CloudAMQP).
+   ```bash
+   cp gateway/.env.example gateway/.env
+   cp ai-worker/.env.example ai-worker/.env
+   ```
+
+3. **Build and Spin Up the Cluster**
+   ```bash
+   docker compose up --build -d
+   ```
+
+4. **Access the Services**
+   - **Frontend UI:** `http://localhost:5173`
+   - **Edge Gateway:** `http://localhost:5000`
+   - **AI Worker:** `http://localhost:8000`

@@ -155,11 +155,11 @@ export function AlertsPage() {
                         Live
                       </span>
                     )}
-                    {alert.locked && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-yellow-600 border border-yellow-200 px-2 rounded-full">
+                    {alert.lockedByAdminId && (
+                      <div className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
                         <Lock className="h-3 w-3" />
-                        Locked by {alert.lockedBy === user?.id ? "You" : `Admin ${alert.lockedBy?.slice(0, 4)}`}
-                      </span>
+                        Locked by {alert.lockedByAdminId === user?.id ? "You" : `Admin ${alert.lockedByAdminId?.slice(0, 4)}`}
+                      </div>
                     )}
                   </div>
                   <p className="font-medium text-primary">{alert.message}</p>
@@ -241,7 +241,7 @@ export function AlertsPage() {
                   )}
                   
                   {alert.lockedByAdminId && alert.lockedByAdminId !== user?.id && !alert.acknowledged && (
-                     <Button variant="secondary" size="sm" disabled>
+                     <Button variant="outline" size="sm" disabled>
                         <Lock className="h-4 w-4 mr-1" />
                         In Progress
                      </Button>

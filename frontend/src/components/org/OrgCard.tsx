@@ -20,11 +20,11 @@ export const OrgCard: React.FC<OrgCardProps> = ({ org, onUpdate, userId }) => {
       if (isMember) {
         await leaveOrganization(org._id);
         setIsMember(false);
-        setMemberCount(prev => Math.max(0, prev - 1));
+        setMemberCount((prev: number) => Math.max(0, prev - 1));
       } else {
         await joinOrganization(org._id);
         setIsMember(true);
-        setMemberCount(prev => prev + 1);
+        setMemberCount((prev: number) => prev + 1);
       }
       if (onUpdate) onUpdate();
     } catch (e) {}

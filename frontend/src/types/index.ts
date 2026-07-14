@@ -1,6 +1,6 @@
 export type UserRole = "ADMIN" | "ANALYST" | "USER";
 export type AccountStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
-export type AlertType = "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW";
+export type AlertType = "RATE_LIMIT" | "AI_THREAT" | "BLOCK" | "SHADOW" | "USER_REPORT";
 export type AlertSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type ThreatAction = "ALLOW" | "MONITOR" | "SHADOW" | "BLOCK";
 
@@ -121,6 +121,7 @@ export interface ThreatLog {
       safe_probability: number;
       predicted_label: string;
       risk_score: number;
+      confidence_score?: number;
     };
     isolation_forest: {
       is_anomaly: boolean;

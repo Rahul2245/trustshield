@@ -271,7 +271,7 @@ export function ThreatsPage() {
                                 <div className="bg-surface rounded-xl p-4 border border-border grid grid-cols-2 gap-4">
                                    <div>
                                       <p className="text-[10px] text-muted uppercase">NLP Confidence</p>
-                                      <p className="text-lg font-bold text-primary">{(threat.prediction.nlp.confidence_score * 100).toFixed(1)}%</p>
+                                      <p className="text-lg font-bold text-primary">{((threat.prediction.nlp.confidence_score || 0) * 100).toFixed(1)}%</p>
                                    </div>
                                    <div>
                                       <p className="text-[10px] text-muted uppercase">Shadow Queue</p>

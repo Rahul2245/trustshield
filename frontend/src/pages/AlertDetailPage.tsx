@@ -219,7 +219,7 @@ export function AlertDetailPage() {
                     <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">
                       {alert.type === "USER_REPORT" ? "Report Reason" : "Trigger Reason"}
                     </p>
-                    <p className="text-sm text-red-800 font-medium">{alert.metadata?.reason || alert.message}</p>
+                    <p className="text-sm text-red-800 font-medium">{String(alert.metadata?.reason || alert.message)}</p>
                   </div>
                 </div>
               </CardContent>

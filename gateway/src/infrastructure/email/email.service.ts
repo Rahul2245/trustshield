@@ -21,9 +21,11 @@ class EmailService {
                     auth: { user, pass }
                 });
                 logger.info({ host }, 'SMTP connection initialized with provided credentials');
+            } else if (process.env.NODE_ENV === 'production') {
+                logger.warn('No SMTP credentials found in production. Skipping Ethereal (since it hangs on deployed servers). Will just log OTP instead.');
             } else {
                 // Generate ethereal account for testing automatically if no credentials
-                logger.info('No SMTP credentials found in .env. Generating Ethereal test account...');
+                logger.info('No SMTP credentials found in local env. Generating Ethereal test account...');
                 const testAccount = await nodemailer.createTestAccount();
                 this.transporter = nodemailer.createTransport({
                     host: "smtp.ethereal.email",
@@ -49,7 +51,7 @@ class EmailService {
         }
 
         if (!this.transporter) {
-            logger.error("Email transporter is not available.");
+            logger.warn({ otp: otpCode }, "Email transporter is not available (likely missing SMTP in production). OTP is logged above.");
             return;
         }
 

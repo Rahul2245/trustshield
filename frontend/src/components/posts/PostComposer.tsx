@@ -110,7 +110,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({ onPostCreated, orgId
           {/* Media preview */}
           {mediaUrl && (
             <div className="relative mb-2 inline-block">
-              <img src={`http://localhost:5000${mediaUrl}`} alt="Upload preview" className="max-h-48 rounded-lg border border-slate-200 object-contain" />
+              <img src={`${import.meta.env.VITE_API_URL || ''}${mediaUrl}`} alt="Upload preview" className="max-h-48 rounded-lg border border-slate-200 object-contain" />
               <button 
                 type="button" 
                 onClick={() => setMediaUrl("")} 

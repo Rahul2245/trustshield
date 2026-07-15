@@ -210,7 +210,7 @@ export function AlertDetailPage() {
                   {alert.targetPost.media && alert.targetPost.media.length > 0 && (
                     <div className="rounded-xl overflow-hidden border border-slate-200 mb-3">
                       {alert.targetPost.media.map((url: string, idx: number) => (
-                        <img key={idx} src={`http://localhost:5000${url}`} alt="Post media" className="w-full h-auto max-h-[300px] object-cover" />
+                        <img key={idx} src={`${import.meta.env.VITE_API_URL || ''}${url}`} alt="Post media" className="w-full h-auto max-h-[300px] object-cover" />
                       ))}
                     </div>
                   )}

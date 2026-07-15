@@ -7,7 +7,6 @@ class EmailService {
 
     async connect(): Promise<void> {
         try {
-            // Check if user provided real SMTP credentials
             const host = process.env.SMTP_HOST;
             const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
             const user = process.env.SMTP_USER;
@@ -17,36 +16,13 @@ class EmailService {
                 this.transporter = nodemailer.createTransport({
                     host,
                     port,
-                    secure: port === 465,
+                    secure: port === 465, // true for 465, false for other ports
                     auth: { user, pass }
                 });
                 logger.info({ host }, 'SMTP connection initialized with provided credentials');
-            } else if (process.env.NODE_ENV === 'production') {
-                logger.warn('No SMTP credentials found in production. Skipping Ethereal (since it hangs on deployed servers). Will just log OTP instead.');
             } else {
-                // Generate ethereal account for testing automatically if no credentials
-                logger.info('No SMTP credentials found in local env. Generating Ethereal test account...');
-                try {
-                    // Render/cloud environments often block this or it hangs, so add a 5 second timeout
-                    const testAccount = await Promise.race([
-                        nodemailer.createTestAccount(),
-                        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Ethereal timeout")), 5000))
-                    ]);
-                    
-                    this.transporter = nodemailer.createTransport({
-                        host: "smtp.ethereal.email",
-                        port: 587,
-                        secure: false,
-                        auth: {
-                            user: testAccount.user,
-                            pass: testAccount.pass,
-                        },
-                    });
-                    logger.info({ user: testAccount.user }, 'Ethereal SMTP test connection initialized');
-                } catch (err) {
-                    logger.warn('Failed to generate Ethereal account (likely blocked by cloud provider). OTP will be logged directly.');
-                    this.transporter = null;
-                }
+                logger.warn('No SMTP credentials found in environment variables. Emails will not be sent, OTP will be logged to console.');
+                this.transporter = null;
             }
 
             this.initialized = true;
@@ -56,12 +32,12 @@ class EmailService {
     }
 
     async sendOtpEmail(to: string, otpCode: string): Promise<void> {
-        if (!this.initialized || !this.transporter) {
+        if (!this.initialized) {
             await this.connect();
         }
 
         if (!this.transporter) {
-            logger.warn({ otp: otpCode }, "Email transporter is not available (likely missing SMTP in production). OTP is logged above.");
+            logger.warn(`Email transporter is not configured. For testing, your OTP is: ${otpCode}`);
             return;
         }
 
@@ -106,14 +82,6 @@ class EmailService {
             });
 
             logger.info({ emailId: info.messageId }, 'OTP Email sent successfully');
-            
-            // If using Ethereal, print the preview URL to the console so the user can click it
-            if (info.messageId && !process.env.SMTP_HOST) {
-                const previewUrl = nodemailer.getTestMessageUrl(info);
-                logger.info({ previewUrl }, 'Ethereal Test Email Preview URL (CLICK HERE TO VIEW EMAIL)');
-                // Print purely so it's super visible in Docker logs
-                console.log(`\n\n======================================================\n📧 VIEW TEST EMAIL HERE: ${previewUrl}\n======================================================\n\n`);
-            }
         } catch (error) {
             logger.error(error, 'Failed to send OTP email');
             throw error;

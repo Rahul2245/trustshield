@@ -10,7 +10,8 @@ class EmailService {
             const host = process.env.SMTP_HOST;
             const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
             const user = process.env.SMTP_USER;
-            const pass = process.env.SMTP_PASS;
+            // Render sometimes keeps quotes if copy-pasted directly, so we strip them
+            const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/(^"|"$)/g, '') : undefined;
 
             if (host && user && pass) {
                 this.transporter = nodemailer.createTransport({

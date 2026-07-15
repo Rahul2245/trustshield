@@ -25,8 +25,18 @@ class EmailService {
                 logger_1.logger.info({ host }, 'SMTP connection initialized with provided credentials');
             }
             else {
-                logger_1.logger.warn('No SMTP credentials found in environment variables. Emails will not be sent, OTP will be logged to console.');
-                this.transporter = null;
+                logger_1.logger.warn('No SMTP credentials found. Creating Ethereal test account...');
+                const testAccount = await nodemailer_1.default.createTestAccount();
+                this.transporter = nodemailer_1.default.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false, // true for 465, false for other ports
+                    auth: {
+                        user: testAccount.user, // generated ethereal user
+                        pass: testAccount.pass, // generated ethereal password
+                    },
+                });
+                logger_1.logger.info('Ethereal test account created successfully.');
             }
             this.initialized = true;
         }
@@ -80,7 +90,13 @@ class EmailService {
                 subject: "TrustShield Action Required: Step-up Verification Code",
                 html: htmlTemplate,
             });
-            logger_1.logger.info({ emailId: info.messageId }, 'OTP Email sent successfully');
+            const previewUrl = nodemailer_1.default.getTestMessageUrl(info);
+            if (previewUrl) {
+                logger_1.logger.info({ emailId: info.messageId, previewUrl }, 'OTP Email sent successfully. Ethereal Preview URL: ' + previewUrl);
+            }
+            else {
+                logger_1.logger.info({ emailId: info.messageId }, 'OTP Email sent successfully');
+            }
         }
         catch (error) {
             logger_1.logger.error(error, 'Failed to send OTP email');

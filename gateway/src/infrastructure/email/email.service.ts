@@ -21,8 +21,18 @@ class EmailService {
                 });
                 logger.info({ host }, 'SMTP connection initialized with provided credentials');
             } else {
-                logger.warn('No SMTP credentials found in environment variables. Emails will not be sent, OTP will be logged to console.');
-                this.transporter = null;
+                logger.warn('No SMTP credentials found. Creating Ethereal test account...');
+                const testAccount = await nodemailer.createTestAccount();
+                this.transporter = nodemailer.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false, // true for 465, false for other ports
+                    auth: {
+                        user: testAccount.user, // generated ethereal user
+                        pass: testAccount.pass, // generated ethereal password
+                    },
+                });
+                logger.info('Ethereal test account created successfully.');
             }
 
             this.initialized = true;
@@ -81,7 +91,12 @@ class EmailService {
                 html: htmlTemplate,
             });
 
-            logger.info({ emailId: info.messageId }, 'OTP Email sent successfully');
+            const previewUrl = nodemailer.getTestMessageUrl(info);
+            if (previewUrl) {
+                logger.info({ emailId: info.messageId, previewUrl }, 'OTP Email sent successfully. Ethereal Preview URL: ' + previewUrl);
+            } else {
+                logger.info({ emailId: info.messageId }, 'OTP Email sent successfully');
+            }
         } catch (error) {
             logger.error(error, 'Failed to send OTP email');
             throw error;

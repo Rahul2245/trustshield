@@ -20,8 +20,8 @@ export class AuthController {
       const validatedData = RegistrationSchema.parse(req.body);
       const result = await this.authService.register(validatedData);
       ApiResponse.success(res, 'User registered successfully', result, 201);
-    } catch (error: unknown) {
-      if (error instanceof AppError) {
+    } catch (error: any) {
+      if (error && error.statusCode) {
         ApiResponse.error(res, error.statusCode, error.message, error);
         return;
       }
@@ -74,8 +74,8 @@ export class AuthController {
       const responseData = { ...result, tokens: tokensWithoutRefresh };
 
       ApiResponse.success(res, 'User logged in successfully', responseData, 200);
-    } catch (error: unknown) {
-      if (error instanceof AppError) {
+    } catch (error: any) {
+      if (error && error.statusCode) {
         if (error.statusCode === 202) {
           ApiResponse.success(res, error.message, { code: error.code }, 202);
           return;
@@ -114,8 +114,8 @@ export class AuthController {
       const responseData = { ...result, tokens: tokensWithoutRefresh };
 
       ApiResponse.success(res, 'OTP verified successfully. User logged in.', responseData, 200);
-    } catch (error: unknown) {
-      if (error instanceof AppError) {
+    } catch (error: any) {
+      if (error && error.statusCode) {
         ApiResponse.error(res, error.statusCode, error.message, error);
         return;
       }
@@ -173,8 +173,8 @@ export class AuthController {
       // If refresh fails, kill the cookies
       res.clearCookie('refreshToken');
       res.clearCookie('adminRefreshToken');
-      if (error instanceof AppError) {
-        ApiResponse.error(res, error.statusCode, error.message, error);
+      if (error && (error as any).statusCode) {
+        ApiResponse.error(res, (error as any).statusCode, (error as any).message, error);
         return;
       }
       ApiResponse.error(res, 401, 'Refresh failed', error);

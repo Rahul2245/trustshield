@@ -9,6 +9,7 @@ const authController = new AuthController();
 router.post('/register', authController.register);
 router.post('/login', rateLimiterMiddleware, authController.login);
 router.post('/admin-login', rateLimiterMiddleware, authController.adminLogin);
+router.post('/verify-otp', rateLimiterMiddleware, authController.verifyOtp);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 router.post('/logout-all', authMiddleware, authController.logoutAll);

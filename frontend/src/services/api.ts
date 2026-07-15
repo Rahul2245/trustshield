@@ -85,6 +85,13 @@ export async function login(email: string, password: string) {
   return data.data;
 }
 
+export async function verifyOtp(email: string, otp: string, isAdminLogin: boolean = false) {
+  const { data } = await api.post<
+    ApiResponse<{ user: User; tokens: AuthTokens }>
+  >("/api/v1/auth/verify-otp", { email, otp, isAdminLogin });
+  return data.data;
+}
+
 export async function adminLogin(email: string, password: string) {
   const { data } = await api.post<
     ApiResponse<{ user: User; tokens: AuthTokens }>

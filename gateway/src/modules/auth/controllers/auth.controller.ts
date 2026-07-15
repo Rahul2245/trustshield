@@ -80,7 +80,7 @@ export class AuthController {
           ApiResponse.success(res, error.message, { code: error.code }, 202);
           return;
         }
-        ApiResponse.error(res, error.statusCode, error.message, error);
+        ApiResponse.error(res, error.statusCode, error.message, { code: error.code });
         return;
       }
       ApiResponse.error(res, 401, 'Login failed', error);
@@ -89,6 +89,38 @@ export class AuthController {
 
   public login = async (req: Request, res: Response): Promise<void> => {
     await this.processLogin(req, res, false);
+  };
+
+  public verifyOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, otp, isAdminLogin } = req.body;
+      if (!email || !otp) {
+        ApiResponse.error(res, 400, 'Email and OTP are required');
+        return;
+      }
+      
+      const result = await this.authService.verifyOtp(email, otp, isAdminLogin);
+      
+      const cookieName = isAdminLogin ? 'adminRefreshToken' : 'refreshToken';
+
+      res.cookie(cookieName, result.tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: result.expiresAt || new Date(Date.now() + 5 * 60 * 60 * 1000)
+      });
+
+      const { refreshToken, ...tokensWithoutRefresh } = result.tokens;
+      const responseData = { ...result, tokens: tokensWithoutRefresh };
+
+      ApiResponse.success(res, 'OTP verified successfully. User logged in.', responseData, 200);
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.statusCode, error.message, error);
+        return;
+      }
+      ApiResponse.error(res, 401, 'OTP verification failed', error);
+    }
   };
 
   public adminLogin = async (req: Request, res: Response): Promise<void> => {

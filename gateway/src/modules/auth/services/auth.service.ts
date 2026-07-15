@@ -114,7 +114,11 @@ export class AuthService {
                 await redisService.set(`otp:${user.email}`, otp, 600);
                 
                 // Send real email with OTP
-                await emailService.sendOtpEmail(user.email, otp);
+                try {
+                    await emailService.sendOtpEmail(user.email, otp);
+                } catch (err) {
+                    logger.error({ err, email: user.email }, 'Failed to send OTP email, proceeding to require OTP anyway');
+                }
                 
                 throw new AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 403, "OTP_REQUIRED");
             }
@@ -126,7 +130,11 @@ export class AuthService {
                 await redisService.set(`otp:${user.email}`, otp, 600);
                 
                 // Send real email with OTP
-                await emailService.sendOtpEmail(user.email, otp);
+                try {
+                    await emailService.sendOtpEmail(user.email, otp);
+                } catch (err) {
+                    logger.error({ err, email: user.email }, 'Failed to send OTP email, proceeding to require OTP anyway');
+                }
                 
                 throw new AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 403, "OTP_REQUIRED");
             }

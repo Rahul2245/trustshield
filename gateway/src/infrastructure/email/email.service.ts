@@ -26,17 +26,27 @@ class EmailService {
             } else {
                 // Generate ethereal account for testing automatically if no credentials
                 logger.info('No SMTP credentials found in local env. Generating Ethereal test account...');
-                const testAccount = await nodemailer.createTestAccount();
-                this.transporter = nodemailer.createTransport({
-                    host: "smtp.ethereal.email",
-                    port: 587,
-                    secure: false,
-                    auth: {
-                        user: testAccount.user,
-                        pass: testAccount.pass,
-                    },
-                });
-                logger.info({ user: testAccount.user }, 'Ethereal SMTP test connection initialized');
+                try {
+                    // Render/cloud environments often block this or it hangs, so add a 5 second timeout
+                    const testAccount = await Promise.race([
+                        nodemailer.createTestAccount(),
+                        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Ethereal timeout")), 5000))
+                    ]);
+                    
+                    this.transporter = nodemailer.createTransport({
+                        host: "smtp.ethereal.email",
+                        port: 587,
+                        secure: false,
+                        auth: {
+                            user: testAccount.user,
+                            pass: testAccount.pass,
+                        },
+                    });
+                    logger.info({ user: testAccount.user }, 'Ethereal SMTP test connection initialized');
+                } catch (err) {
+                    logger.warn('Failed to generate Ethereal account (likely blocked by cloud provider). OTP will be logged directly.');
+                    this.transporter = null;
+                }
             }
 
             this.initialized = true;

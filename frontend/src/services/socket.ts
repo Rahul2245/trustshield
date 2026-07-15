@@ -10,7 +10,7 @@ export function connectSocket(): Socket {
     return socket;
   }
 
-  const wsUrl = import.meta.env.VITE_WS_URL || window.location.origin;
+  const wsUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL || window.location.origin;
 
   socket = io(wsUrl, {
     path: "/socket.io",

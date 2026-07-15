@@ -100,7 +100,9 @@ class AdminRepository {
         return alert.save();
     }
     async findAlerts(page, limit, acknowledged) {
-        const filter = {};
+        const filter = {
+            severity: { $in: ["MEDIUM", "HIGH", "CRITICAL"] }
+        };
         if (acknowledged !== undefined) {
             filter.acknowledged = acknowledged;
         }

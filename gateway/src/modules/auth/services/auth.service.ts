@@ -95,6 +95,11 @@ export class AuthService {
             throw new AppError("Account suspended.", 403, "ACCOUNT_SUSPENDED");
         }
 
+        const isMatch = await user.comparePassword(userData.password);
+        if (!isMatch) {
+            throw new AppError("Invalid credentials", 401, "UNAUTHORIZED");
+        }
+
         const lastActiveDate = user.lastLoginAt || user.createdAt;
         if (lastActiveDate) {
             const daysSinceLastActive = (new Date().getTime() - lastActiveDate.getTime()) / (1000 * 3600 * 24);
@@ -125,11 +130,6 @@ export class AuthService {
                 
                 throw new AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 403, "OTP_REQUIRED");
             }
-        }
-
-        const isMatch = await user.comparePassword(userData.password);
-        if (!isMatch) {
-            throw new AppError("Invalid credentials", 401, "UNAUTHORIZED");
         }
 
         await this.authRepository.updateLastLogin((user._id as { toString(): string }).toString());

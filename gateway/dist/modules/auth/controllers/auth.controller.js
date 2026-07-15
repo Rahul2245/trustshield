@@ -72,7 +72,7 @@ class AuthController {
                     api_response_1.ApiResponse.success(res, error.message, { code: error.code }, 202);
                     return;
                 }
-                api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
+                api_response_1.ApiResponse.error(res, error.statusCode, error.message, { code: error.code });
                 return;
             }
             api_response_1.ApiResponse.error(res, 401, 'Login failed', error);
@@ -80,6 +80,33 @@ class AuthController {
     }
     login = async (req, res) => {
         await this.processLogin(req, res, false);
+    };
+    verifyOtp = async (req, res) => {
+        try {
+            const { email, otp, isAdminLogin } = req.body;
+            if (!email || !otp) {
+                api_response_1.ApiResponse.error(res, 400, 'Email and OTP are required');
+                return;
+            }
+            const result = await this.authService.verifyOtp(email, otp, isAdminLogin);
+            const cookieName = isAdminLogin ? 'adminRefreshToken' : 'refreshToken';
+            res.cookie(cookieName, result.tokens.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                expires: result.expiresAt || new Date(Date.now() + 5 * 60 * 60 * 1000)
+            });
+            const { refreshToken, ...tokensWithoutRefresh } = result.tokens;
+            const responseData = { ...result, tokens: tokensWithoutRefresh };
+            api_response_1.ApiResponse.success(res, 'OTP verified successfully. User logged in.', responseData, 200);
+        }
+        catch (error) {
+            if (error instanceof AppError_1.AppError) {
+                api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
+                return;
+            }
+            api_response_1.ApiResponse.error(res, 401, 'OTP verification failed', error);
+        }
     };
     adminLogin = async (req, res) => {
         await this.processLogin(req, res, true);

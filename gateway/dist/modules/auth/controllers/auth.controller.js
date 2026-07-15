@@ -7,7 +7,6 @@ const auth_validation_1 = require("../validators/auth.validation");
 const api_response_1 = require("../../../shared/responses/api-response");
 const connection_1 = require("../../../infrastructure/rabbitmq/connection");
 const logger_1 = require("../../../infrastructure/logger/logger");
-const AppError_1 = require("../../../core/errors/AppError");
 class AuthController {
     authService;
     constructor() {
@@ -20,7 +19,7 @@ class AuthController {
             api_response_1.ApiResponse.success(res, 'User registered successfully', result, 201);
         }
         catch (error) {
-            if (error instanceof AppError_1.AppError) {
+            if (error && error.statusCode) {
                 api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
                 return;
             }
@@ -67,7 +66,7 @@ class AuthController {
             api_response_1.ApiResponse.success(res, 'User logged in successfully', responseData, 200);
         }
         catch (error) {
-            if (error instanceof AppError_1.AppError) {
+            if (error && error.statusCode) {
                 if (error.statusCode === 202) {
                     api_response_1.ApiResponse.success(res, error.message, { code: error.code }, 202);
                     return;
@@ -101,7 +100,7 @@ class AuthController {
             api_response_1.ApiResponse.success(res, 'OTP verified successfully. User logged in.', responseData, 200);
         }
         catch (error) {
-            if (error instanceof AppError_1.AppError) {
+            if (error && error.statusCode) {
                 api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
                 return;
             }
@@ -152,7 +151,7 @@ class AuthController {
             // If refresh fails, kill the cookies
             res.clearCookie('refreshToken');
             res.clearCookie('adminRefreshToken');
-            if (error instanceof AppError_1.AppError) {
+            if (error && error.statusCode) {
                 api_response_1.ApiResponse.error(res, error.statusCode, error.message, error);
                 return;
             }

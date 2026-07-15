@@ -81,6 +81,10 @@ class AuthService {
         if (user.status === "SUSPENDED") {
             throw new AppError_1.AppError("Account suspended.", 403, "ACCOUNT_SUSPENDED");
         }
+        const isMatch = await user.comparePassword(userData.password);
+        if (!isMatch) {
+            throw new AppError_1.AppError("Invalid credentials", 401, "UNAUTHORIZED");
+        }
         const lastActiveDate = user.lastLoginAt || user.createdAt;
         if (lastActiveDate) {
             const daysSinceLastActive = (new Date().getTime() - lastActiveDate.getTime()) / (1000 * 3600 * 24);
@@ -92,7 +96,12 @@ class AuthService {
                 // Store in Redis with 10 mins expiry
                 await redis_1.redisService.set(`otp:${user.email}`, otp, 600);
                 // Send real email with OTP
-                await email_service_1.emailService.sendOtpEmail(user.email, otp);
+                try {
+                    await email_service_1.emailService.sendOtpEmail(user.email, otp);
+                }
+                catch (err) {
+                    logger_1.logger.error({ err, email: user.email }, 'Failed to send OTP email, proceeding to require OTP anyway');
+                }
                 throw new AppError_1.AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 403, "OTP_REQUIRED");
             }
             if (user.status === 'INACTIVE') {
@@ -101,13 +110,14 @@ class AuthService {
                 // Store in Redis with 10 mins expiry
                 await redis_1.redisService.set(`otp:${user.email}`, otp, 600);
                 // Send real email with OTP
-                await email_service_1.emailService.sendOtpEmail(user.email, otp);
+                try {
+                    await email_service_1.emailService.sendOtpEmail(user.email, otp);
+                }
+                catch (err) {
+                    logger_1.logger.error({ err, email: user.email }, 'Failed to send OTP email, proceeding to require OTP anyway');
+                }
                 throw new AppError_1.AppError("Dormant Account Takeover anomaly detected. Step-up email MFA required.", 403, "OTP_REQUIRED");
             }
-        }
-        const isMatch = await user.comparePassword(userData.password);
-        if (!isMatch) {
-            throw new AppError_1.AppError("Invalid credentials", 401, "UNAUTHORIZED");
         }
         await this.authRepository.updateLastLogin(user._id.toString());
         const sessionId = (0, uuid_1.v4)();
